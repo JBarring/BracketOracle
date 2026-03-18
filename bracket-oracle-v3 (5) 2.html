@@ -1,0 +1,2367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bracket Oracle — NCAA Predictor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090e;--s1:#0c0f16;--s2:#111520;--s3:#171c2a;--s4:#1d2235;
+  --bd:#1a2035;--bd2:#252d42;
+  --ac:#f5a623;--ac2:#e05500;--blue:#4361ee;--grn:#27c264;--red:#e63946;--purple:#9b59b6;
+  --t1:#dde4f0;--t2:#7a87a0;--t3:#3d4a5e;
+}
+body{background:var(--bg);color:var(--t1);font-family:'Inter',sans-serif;font-size:13px;line-height:1.4;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+button{font-family:'Inter',sans-serif;cursor:pointer}
+#hdr{background:var(--s1);border-bottom:1px solid var(--bd);padding:12px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+.logo{font-family:'Bebas Neue',cursive;font-size:30px;letter-spacing:3px;background:linear-gradient(135deg,#f5a623,#e05500);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.logo-sub{font-size:9px;color:var(--t3);letter-spacing:2.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-top:2px}
+#hdr-r{margin-left:auto;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.btn{padding:7px 14px;border:none;border-radius:6px;font-size:11px;font-weight:600;transition:all .15s;letter-spacing:.3px;cursor:pointer}
+.bp{background:linear-gradient(135deg,#f5a623,#e05500);color:#000}
+.bp:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,166,35,.35)}
+.bg{background:none;border:1px solid var(--bd2);color:var(--t2)}
+.bg:hover{border-color:var(--t2);color:var(--t1)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.btn-sm{padding:6px 12px}
+#status-bar{background:var(--s1);border-bottom:1px solid var(--bd);padding:7px 20px;display:flex;align-items:center;gap:14px;font-size:10px;flex-wrap:wrap}
+.si{display:flex;align-items:center;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-idle{background:var(--t3)}.dot-loading{background:var(--ac);animation:throb 1s ease infinite}.dot-live{background:var(--grn)}.dot-err{background:var(--red)}
+@keyframes throb{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+.sl{color:var(--t2)}.sv{color:var(--t1);font-family:'JetBrains Mono',monospace;font-weight:600}
+#prog{background:var(--s1);border-bottom:1px solid var(--bd);padding:8px 20px;display:none;align-items:center;gap:10px}
+#prog.show{display:flex}
+.pg-t{flex:1;height:3px;background:var(--bd);border-radius:2px;overflow:hidden}
+.pg-f{height:100%;background:linear-gradient(90deg,#f5a623,#e05500);border-radius:2px;transition:width .3s}
+.pg-lbl{font-size:10px;color:var(--t2);font-family:'JetBrains Mono',monospace;white-space:nowrap;min-width:120px}
+#tabs{background:var(--s1);border-bottom:1px solid var(--bd);padding:0 20px;display:flex;overflow-x:auto}
+.tab{padding:11px 15px;cursor:pointer;font-size:11px;font-weight:600;color:var(--t3);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.tab.on{color:var(--ac);border-bottom-color:var(--ac)}
+.tab:hover:not(.on){color:var(--t1)}
+#body{display:flex;overflow:hidden;min-height:0;flex:1}
+.main{flex:1;overflow-y:auto;overflow-x:auto;padding:18px 20px}
+.side{width:420px;min-width:240px;max-width:75vw;border-left:none;background:var(--s1);overflow-y:auto;display:flex;flex-direction:column}.resizer{width:4px;background:var(--bd);cursor:col-resize;flex-shrink:0;transition:background .15s;position:relative;z-index:10}.resizer:hover,.resizer.dragging{background:var(--ac)}
+.region{margin-bottom:28px}
+.r-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.r-name{font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;color:var(--ac)}
+.r-badge{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;letter-spacing:.8px;text-transform:uppercase}
+.r-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(245,166,35,.2),transparent)}
+.rab{padding:3px 9px;font-size:9px;font-weight:600;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:4px;color:var(--ac);cursor:pointer;transition:all .15s}
+.rab:hover{background:rgba(245,166,35,.18)}.rab:disabled{opacity:.3;cursor:not-allowed}
+.rounds{display:flex;gap:2px;align-items:flex-start}
+.rcol{display:flex;flex-direction:column;gap:2px;min-width:182px;flex-shrink:0}
+.rlbl-row{display:flex;align-items:center;justify-content:center;gap:6px;padding:3px 0 5px}
+.rlbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--t3);text-transform:uppercase;letter-spacing:.8px}
+.rnd-btn{font-size:8px;padding:2px 5px;background:rgba(67,97,238,.1);border:1px solid rgba(67,97,238,.2);border-radius:3px;color:#7b93ff;cursor:pointer;transition:all .15s;font-weight:600}
+.rnd-btn:hover{background:rgba(67,97,238,.25)}.rnd-btn:disabled{opacity:.25;cursor:not-allowed}
+.mc{background:var(--s2);border:1px solid var(--bd);border-radius:7px;overflow:hidden;transition:border-color .2s;cursor:pointer}
+.mc.done{border-color:rgba(245,166,35,.2)}.mc.done:hover{border-color:rgba(245,166,35,.4)}
+.mc.busy{border-color:rgba(67,97,238,.5);animation:pulse 1.3s ease infinite}
+.mc.active{border-color:var(--ac);box-shadow:0 0 0 2px rgba(245,166,35,.15)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.ts{display:flex;align-items:center;gap:5px;padding:5px 7px;min-height:30px;transition:background .1s}
+.ts+.ts{border-top:1px solid var(--bd)}
+.ts.win{background:rgba(245,166,35,.07)}.ts.ov{background:rgba(155,89,182,.08)}.ts.empty{opacity:.25}
+.tseed{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--t3);min-width:13px;text-align:right;flex-shrink:0}
+.tname{font-size:10px;font-weight:500;color:var(--t1);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:105px}
+.ts.win .tname{color:var(--ac);font-weight:700}.ts.ov .tname{color:var(--purple);font-weight:700}
+.twab{font-size:8px;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.twab.pos{color:var(--grn)}.twab.neg{color:var(--red)}.twab.neu{color:var(--t3)}
+.tick{font-size:9px;flex-shrink:0;color:var(--grn)}.tick.ov{color:var(--purple)}
+.vsbar{padding:4px 7px;background:rgba(0,0,0,.22);display:flex;align-items:center;gap:5px;justify-content:center}
+.abtn{width:100%;padding:4px 0;background:rgba(67,97,238,.1);border:1px solid rgba(67,97,238,.22);border-radius:3px;color:#8ea4ff;font-size:9px;font-weight:600;transition:all .15s;cursor:pointer;font-family:'Inter',sans-serif}
+.abtn:hover:not(:disabled){background:rgba(67,97,238,.25)}.abtn:disabled{opacity:.28;cursor:not-allowed}
+.pbar{flex:1;display:flex;align-items:center;gap:4px}
+.pbar-t{flex:1;height:3px;background:var(--bd);border-radius:2px;overflow:hidden}
+.pbar-f{height:100%;border-radius:2px;transition:width .5s}
+.pf-fav{background:linear-gradient(90deg,var(--grn),var(--ac))}
+.pf-upset{background:linear-gradient(90deg,var(--red),#ff6b35)}
+.pf-ov{background:linear-gradient(90deg,var(--purple),#c39bd3)}
+.pct{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--ac);min-width:25px}
+.upill{font-size:7px;background:var(--red);color:#fff;padding:1px 4px;border-radius:8px;font-weight:700;flex-shrink:0}
+.ovpill{font-size:7px;background:var(--purple);color:#fff;padding:1px 4px;border-radius:8px;font-weight:700;flex-shrink:0}
+.spin-txt{font-size:10px;color:var(--t2);font-family:'JetBrains Mono',monospace}
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+.da{animation:blink 1.2s infinite;opacity:0}.da:nth-child(2){animation-delay:.2s}.da:nth-child(3){animation-delay:.4s}
+.side-panel{padding:14px;border-bottom:1px solid var(--bd)}
+.side-title{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:1px;font-family:'JetBrains Mono',monospace;margin-bottom:8px}
+#analysis-panel{flex:1;overflow-y:auto}
+.ap-placeholder{padding:20px;color:var(--t3);font-size:11px;text-align:center;line-height:1.7}
+.verdict{padding:14px;border-bottom:1px solid var(--bd)}
+.team-row{display:flex;align-items:stretch;gap:6px;margin-bottom:8px}
+.team-box{flex:1;padding:8px;border-radius:6px;border:1px solid var(--bd);text-align:center}
+.team-box.w{border-color:rgba(245,166,35,.4);background:rgba(245,166,35,.05)}
+.team-box.l{opacity:.55}
+.team-box.wov{border-color:rgba(155,89,182,.4);background:rgba(155,89,182,.05)}
+.tb-name{font-size:11px;font-weight:700;margin-bottom:2px}
+.tb-seed{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace}
+.tb-prob{font-size:19px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-top:3px}
+.vs-div{display:flex;align-items:center;font-size:10px;color:var(--t3);font-weight:700;padding:0 2px}
+.proj-score{font-size:11px;color:var(--t2);text-align:center;margin-bottom:6px}
+.tags{display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+.tag{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700}
+.t-upset{background:var(--red);color:#fff}.t-real{background:rgba(39,194,100,.12);color:var(--grn);border:1px solid rgba(39,194,100,.3)}
+.t-seed{background:rgba(245,166,35,.1);color:var(--ac);border:1px solid rgba(245,166,35,.2)}.t-ov{background:rgba(155,89,182,.12);color:var(--purple);border:1px solid rgba(155,89,182,.3)}
+.pick-section{padding:12px 14px;border-bottom:1px solid var(--bd);background:rgba(155,89,182,.03)}
+.pick-title{font-size:10px;font-weight:700;color:var(--purple);margin-bottom:5px}
+.pick-desc{font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.6}
+.pick-btns{display:flex;gap:7px}
+.pick-btn{flex:1;padding:8px 6px;border-radius:6px;border:1px solid var(--bd2);background:var(--s3);color:var(--t1);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.pick-btn:hover{border-color:var(--t2);background:var(--s4)}
+.pick-btn.sel-model{border-color:var(--ac);background:rgba(245,166,35,.08);color:var(--ac)}
+.pick-btn.sel-ov{border-color:var(--purple);background:rgba(155,89,182,.12);color:var(--purple)}
+.clear-ov{font-size:9px;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:5px;display:block}
+.steps-wrap{padding:12px 14px}
+.steps-label{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.step{background:var(--s2);border:1px solid var(--bd);border-radius:7px;margin-bottom:7px;overflow:hidden}
+.step-hdr{display:flex;align-items:center;gap:7px;padding:8px 10px;cursor:pointer;user-select:none}
+.step-hdr:hover{background:rgba(255,255,255,.02)}
+.step-n{width:17px;height:17px;border-radius:50%;background:var(--blue);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'JetBrains Mono',monospace}
+.step-lbl{font-size:10px;font-weight:600;color:var(--t1);flex:1}
+.step-sum{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--ac);text-align:right;max-width:160px;overflow:visible;white-space:normal;line-height:1.3}
+.step-chev{font-size:10px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.step-chev.open{transform:rotate(180deg)}
+.step-body{padding:10px;border-top:1px solid var(--bd);display:none}
+.step-body.open{display:block}
+.step-explain{font-size:10px;color:var(--t2);line-height:1.65;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--bd)}
+.sg{display:grid;grid-template-columns:1fr auto 1fr;gap:2px 6px;align-items:center}
+.sg-h{font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;padding-bottom:3px;border-bottom:1px solid var(--bd)}
+.sg-l{font-size:9px;color:var(--t2);text-align:center;padding:1px 0}
+.sg-v{font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600;padding:2px 0}
+.sg-v.L{text-align:right}.sg-v.R{text-align:left}
+.sg-v.good{color:var(--grn)}.sg-v.bad{color:var(--red)}.sg-v.na{color:var(--t3);font-size:9px}
+.sg-ex{grid-column:1/-1;font-size:9px;color:var(--t3);font-style:italic;padding:1px 0 5px;line-height:1.45;border-bottom:1px solid rgba(255,255,255,.03)}
+.dr{display:grid;grid-template-columns:1fr 65px 58px;gap:3px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.dr:last-child{border-bottom:none}
+.dr-l{font-size:9px;color:var(--t2)}.dr-v{font-size:10px;font-family:'JetBrains Mono',monospace;text-align:center;font-weight:600}.dr-e{font-size:9px;text-align:right;font-weight:700}
+.fml{font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;font-style:italic;padding:1px 0 3px;grid-column:1/-1}
+.wr{display:grid;grid-template-columns:1fr 55px 44px;gap:4px;align-items:center;padding:2px 0}
+.wr-l{font-size:9px;color:var(--t2)}.wr-bw{height:5px;background:var(--bd);border-radius:2px;overflow:hidden}.wr-b{height:100%;border-radius:2px}.wr-n{font-size:10px;font-family:'JetBrains Mono',monospace;text-align:right}
+.score-tot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--bd);margin-top:6px;padding-top:6px}
+.prob-big{height:11px;background:var(--s3);border-radius:5px;overflow:hidden;margin:6px 0}
+.prob-inner{height:100%;border-radius:5px;transition:width .6s}
+.mc-g{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin:7px 0}
+.mc-b{background:var(--s3);border-radius:5px;padding:7px;text-align:center;border:1px solid var(--bd)}
+.mc-n{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700}.mc-l{font-size:8px;color:var(--t3);margin-top:1px}
+.seed-box{background:var(--s3);border-radius:5px;padding:8px;border:1px solid var(--bd)}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:10px}
+.sr:last-child{border-bottom:none}.sr-k{color:var(--t2)}
+.clamp-box{background:var(--s3);border-radius:5px;padding:8px;border:1px solid var(--bd)}
+.clamp-range{height:8px;background:var(--bd);border-radius:4px;position:relative;margin:8px 0}
+.clamp-allowed{position:absolute;height:100%;background:rgba(67,97,238,.3);border-radius:4px}
+.clamp-dot{position:absolute;width:9px;height:9px;border-radius:50%;top:50%;transform:translateY(-50%)}
+.progress-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--bd);font-size:10px}
+.progress-row:last-child{border-bottom:none}
+.ff-wrap{max-width:840px;margin:0 auto}
+.ff-title{font-family:'Bebas Neue',cursive;font-size:24px;letter-spacing:4px;text-align:center;color:var(--ac);margin-bottom:16px}
+.ff-grid{display:grid;grid-template-columns:1fr 155px 1fr;gap:16px;align-items:center}
+.ff-clbl{font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--t3);text-transform:uppercase;letter-spacing:1px;text-align:center;margin-bottom:4px}
+.ff-ctr{display:flex;flex-direction:column;align-items:center;gap:7px}
+.trophy-ico{font-size:38px;filter:drop-shadow(0 0 14px rgba(245,166,35,.4))}
+.cbox{background:rgba(245,166,35,.05);border:1px solid rgba(245,166,35,.22);border-radius:9px;padding:12px;text-align:center;width:100%}
+.clbl{font-size:9px;color:var(--t3);letter-spacing:1.5px;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:5px}
+.cname{font-family:'Bebas Neue',cursive;font-size:17px;color:var(--ac);letter-spacing:1px}
+.cscore{font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--t1);margin-top:3px}
+.cprob{font-size:10px;color:var(--grn);font-family:'JetBrains Mono',monospace;margin-top:3px}
+.import-wrap{max-width:780px}
+.import-title{font-family:'Bebas Neue',cursive;font-size:22px;letter-spacing:2px;color:var(--ac);margin-bottom:10px}
+textarea.ita{width:100%;min-height:280px;background:var(--s2);border:1px solid var(--bd);border-radius:7px;color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:10px;padding:12px;resize:vertical;outline:none}
+textarea.ita:focus{border-color:var(--blue)}
+.ibtns{display:flex;gap:7px;margin-top:9px}
+.hint{font-size:10px;color:var(--t3);margin-top:10px;line-height:1.7}
+.model-wrap{max-width:660px;line-height:1.7}
+.mh{font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:2px;color:var(--ac);margin:12px 0 5px}
+.mp{font-size:11px;color:var(--t2);margin-bottom:8px}
+.code{background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--grn);margin:5px 0 10px;white-space:pre-wrap;overflow-x:auto}
+.sg-step{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--bd)}
+.sg-step:last-child{border-bottom:none}
+.sg-num{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--ac),#e05500);color:#000;font-weight:800;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.sg-body{font-size:11px;color:var(--t2);line-height:1.7}
+.sg-body strong{color:var(--t1)}
+.step-row{display:grid;grid-template-columns:22px 110px 1fr;gap:8px;align-items:start;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.step-n{width:22px;height:22px;border-radius:4px;background:var(--s3);border:1px solid var(--bd);color:var(--t3);font-size:9px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700}
+.step-l{font-size:10px;font-weight:700;color:var(--t1)}
+.step-d{font-size:10px;color:var(--t2);line-height:1.6}
+.limit-pill{font-size:10px;color:var(--red);background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.2);border-radius:4px;padding:3px 8px}
+.steps-guide{margin:10px 0}
+.slider-card{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:14px 16px;margin-bottom:8px;transition:border-color .2s}
+.slider-card:hover{border-color:var(--bd2)}
+.slider-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.slider-title{font-size:12px;font-weight:700;color:var(--t1)}
+.slider-pct{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--ac);min-width:42px;text-align:right}
+.slider-sub{font-size:11px;color:var(--t1);margin-bottom:8px;line-height:1.7;opacity:.82}
+.slider-example{font-size:9px;color:var(--t2);font-family:'JetBrains Mono',monospace;background:var(--s3);border:1px solid var(--bd);padding:6px 8px;border-radius:4px;margin-top:6px;line-height:1.75;white-space:pre}
+input[type=range].wt-slider{width:100%;-webkit-appearance:none;height:5px;border-radius:2px;background:var(--bd3,#2a3245);outline:none;cursor:pointer;margin-top:2px}
+input[type=range].wt-slider::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--ac);cursor:pointer;border:2px solid #07090e;transition:transform .1s}
+input[type=range].wt-slider::-webkit-slider-thumb:hover{transform:scale(1.25)}
+.ucard{background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.18);border-radius:7px;padding:10px;margin-bottom:7px}
+.um{color:var(--red);font-weight:700;font-size:12px;margin-bottom:3px}.ud{font-size:10px;color:var(--t2);line-height:1.5}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div><div class="logo">Bracket Oracle</div><div class="logo-sub">NCAA Basketball · Real Data Predictor</div></div>
+  <div id="hdr-r">
+    <span id="ac-lbl" style="font-size:10px;color:var(--t2);font-family:'JetBrains Mono',monospace">0/32 R64</span>
+    <button class="btn bg btn-sm" onclick="loadSample()">Sample</button>
+    <button class="btn bg btn-sm" onclick="downloadPDF()">📄 Download PDF</button>
+    <button class="btn bg btn-sm" onclick="showTab('import')">Import</button>
+    <button class="btn bp btn-sm" id="btn-all" onclick="analyzeAll()">⚡ Analyze All</button>
+  </div>
+</div>
+
+<div id="status-bar">
+  <div class="si"><div class="dot dot-idle" id="d-bt"></div><span class="sl">Data:</span><span class="sv" id="s-bt">Loading...</span></div>
+  <div class="si"><div class="dot dot-idle" id="d-match"></div><span class="sl">Teams matched:</span><span class="sv" id="s-match">0</span></div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <span id="s-note" style="font-size:10px;color:var(--t3)"></span>
+    <button class="btn bp btn-sm" id="btn-fetch" onclick="fetchAllData()" style="display:none">🔄 Fetch Live Data</button>
+    <button class="btn bg btn-sm" id="btn-refetch" style="display:none" onclick="refetchData()">↺ Refresh from barttorvik.com</button>
+  </div>
+</div>
+
+<div id="prog"><div class="pg-t"><div class="pg-f" id="pg-f"></div></div><span class="pg-lbl" id="pg-lbl">Loading...</span></div>
+
+<div id="tabs">
+  <div class="tab on" onclick="showTab('bracket')">🏀 Bracket</div>
+  <div class="tab" onclick="showTab('finalfour')">🏆 Final Four</div>
+  <div class="tab" onclick="showTab('upsets')">⚡ Upsets</div>
+  <div class="tab" onclick="showTab('model')">🧠 How It Works</div>
+  <div class="tab" onclick="showTab('formula')">⚙ Formula</div>
+  <div class="tab" onclick="showTab('import')">📥 Import</div>
+</div>
+
+<div id="body">
+  <div class="main" id="main">
+    <div id="tab-bracket"><div id="bracket-el"></div></div>
+    <div id="tab-finalfour" style="display:none">
+      <div class="ff-wrap">
+        <div class="ff-title">🏀 Final Four & National Championship</div>
+        <div class="ff-grid">
+          <div><div class="ff-clbl">Semifinal 1 · East vs West</div><div id="ff0"></div></div>
+          <div class="ff-ctr">
+            <div class="trophy-ico">🏆</div>
+            <div class="cbox" id="champ-box"><div class="clbl">National Champion</div><div id="champ-inner" style="color:var(--t3);font-size:11px;margin-top:6px">Analyze semifinals first</div></div>
+          </div>
+          <div><div class="ff-clbl">Semifinal 2 · South vs Midwest</div><div id="ff1"></div></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-upsets" style="display:none">
+      <h3 style="font-family:'Bebas Neue',cursive;font-size:20px;letter-spacing:2px;color:var(--red);margin-bottom:12px">⚡ Upset Predictions</h3>
+      <div id="upsets-el"><div style="color:var(--t2);font-size:12px">Analyze games first.</div></div>
+    </div>
+    <div id="tab-model" style="display:none">
+      <div class="model-wrap">
+        <div class="mh">How to Use Bracket Oracle</div>
+        <div class="mp">All data is built in — no fetch required. Open the bracket, analyze games, adjust the formula. That's it.</div>
+        <div class="steps-guide">
+          <div class="sg-step"><div class="sg-num">1</div><div class="sg-body"><strong>Bracket is ready to go</strong> — The 2026 NCAA tournament bracket and all T-Rank efficiency stats are baked in. Just hit <strong style="color:var(--ac)">⚡ Analyze All</strong> and predictions run instantly.</div></div>
+          <div class="sg-step"><div class="sg-num">2</div><div class="sg-body"><strong>Analyze games</strong> — Click ⚡ on any matchup card, or use the bulk buttons per round or region. The full step-by-step breakdown appears in the right sidebar.</div></div>
+          <div class="sg-step"><div class="sg-num">3</div><div class="sg-body"><strong>Override the model</strong> — Disagree? Click your pick in the sidebar. Your choice turns purple. The model's original is always preserved so you can compare.</div></div>
+          <div class="sg-step"><div class="sg-num">4</div><div class="sg-body"><strong>Tune the formula</strong> — Visit ⚙ Formula to adjust how much each metric matters. Trust analytics? Weight efficiency higher. Trust history? Boost seed weight. Changes take effect on the next Analyze.</div></div>
+        </div>
+
+        <div class="mh" style="margin-top:18px">Data</div>
+        <div class="mp">Stats are sourced from BartTorvik 2026 T-Rank and baked directly into this file — no network call needed.</div>
+        <div style="background:var(--s2);border:1px solid rgba(245,166,35,.2);border-radius:7px;padding:12px;margin:10px 0">
+          <div style="font-size:10px;font-weight:700;color:var(--ac);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">BartTorvik 2026 T-Rank — Built In</div>
+          <div style="font-size:10px;color:var(--t2);line-height:1.8">67 tournament teams · AdjOE · AdjDE · Barthag · WAB · Tempo · W-L record<br>
+          Data current as of bracket selection day. To pull the very latest numbers, hit <strong style="color:var(--t1)">↺ Refresh from barttorvik.com</strong> in the status bar — this is optional and only needed if stats have changed significantly since selection.</div>
+        </div>
+
+        <div class="mh">How Each Prediction is Made</div>
+        <div style="display:grid;gap:5px;margin:8px 0">
+          <div class="step-row"><span class="step-n">1</span><span class="step-l">Load Stats</span><span class="step-d">Read built-in T-Rank stats for both teams. Teams not in the dataset fall back to seed-average estimates, marked with ~.</span></div>
+          <div class="step-row"><span class="step-n">2</span><span class="step-l">Compute Edges</span><span class="step-d">T1 minus T2 for each metric, scaled to comparable units. Positive = T1 advantage, negative = T2 advantage.</span></div>
+          <div class="step-row"><span class="step-n">3</span><span class="step-l">Seed Prior</span><span class="step-d">Historical upset rate for this exact seed matchup over 40+ years of March Madness data.</span></div>
+          <div class="step-row"><span class="step-n">4</span><span class="step-l">Weighted Score</span><span class="step-d">Each edge × its formula weight (adjustable in ⚙ Formula tab) → summed into one composite score.</span></div>
+          <div class="step-row"><span class="step-n">5</span><span class="step-l">Sigmoid</span><span class="step-d">Converts raw score to 0–100% win probability via 1/(1+e^−x). Score = 0 means 50/50.</span></div>
+          <div class="step-row"><span class="step-n">6</span><span class="step-l">Monte Carlo</span><span class="step-d">1,000 simulated games add gaussian noise to model real game-day variance — teams rarely play exactly to their season average.</span></div>
+          <div class="step-row"><span class="step-n">7</span><span class="step-l">Blend</span><span class="step-d">60% model probability + 40% simulation win rate for a more robust final estimate.</span></div>
+          <div class="step-row"><span class="step-n">8</span><span class="step-l">Guardrails</span><span class="step-d">Final probability clamped to historically valid range — e.g. a #1 seed can't show below ~78%, which has never happened in 40+ years.</span></div>
+        </div>
+
+        <div class="mh" style="margin-top:14px">Known Limitations</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
+          <div class="limit-pill">⚠ No injury data</div>
+          <div class="limit-pill">⚠ No coaching factor</div>
+          <div class="limit-pill">⚠ No travel/rest advantage</div>
+          <div class="limit-pill">⚠ Stats frozen at selection day</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-formula" style="display:none">
+      <div class="model-wrap">
+        <div style="font-size:22px;font-weight:900;color:var(--ac);letter-spacing:1px;margin-bottom:5px;text-transform:uppercase;font-family:'Inter',sans-serif">Prediction Formula</div>
+        <div style="font-size:12px;color:var(--t1);line-height:1.8;margin-bottom:10px;opacity:.85">Each factor below contributes a weighted edge to the final win probability. Adjust the sliders in the <strong style="color:var(--ac)">right panel</strong> — drag any weight, then re-analyze to see updated predictions.</div>
+        <div id="formula-data-banner" style="display:none;background:rgba(230,57,70,.07);border:1px solid rgba(230,57,70,.25);border-radius:7px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--t2);line-height:1.7">
+          <strong style="color:var(--red)">⚠ BartTorvik data not loaded</strong> — 5 of 7 metrics are locked. Only <strong>Seed History</strong> and <strong>Win Percentage</strong> are active.<br>
+          Click <strong style="color:var(--ac)">Fetch Live Data</strong> in the status bar to unlock all metrics.
+        </div>
+        <div id="formula-desc-list"></div>
+      </div>
+    </div>
+    <div id="tab-import" style="display:none">
+      <div class="import-wrap">
+        <div class="import-title">Import Bracket</div>
+        <div style="font-size:11px;color:var(--t2);margin-bottom:10px">Paste your bracket JSON when the NCAA bracket drops. Each region needs 8 matchup pairs. Include seed numbers in team names.</div>
+        <textarea class="ita" id="import-ta" rows="13"></textarea>
+        <div class="ibtns">
+          <button class="btn bp btn-sm" onclick="doImport()">Import</button>
+          <button class="btn bg btn-sm" onclick="document.getElementById('import-ta').value=JSON.stringify(SAMPLE_BRACKET,null,2)">Template</button>
+          <button class="btn bg btn-sm" onclick="clearAll()">Clear All</button>
+        </div>
+        <div class="hint">Format: <code style="color:var(--ac)">"1 Duke"</code>, <code style="color:var(--ac)">"12 McNeese"</code> — include seed numbers!<br>
+        Order: [1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15]<br>
+        After import: Fetch Live Data → Analyze All R64</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="resizer" id="resizer"></div>
+  <div class="side" id="sidebar">
+    <div id="formula-side-panel" style="display:none;flex-direction:column;height:100%;overflow-y:auto">
+      <div class="side-panel" style="border-bottom:none;flex:1;overflow-y:auto">
+        <div class="side-title">Formula Weights</div>
+        <div class="mp" style="font-size:10px;color:var(--t2);margin-bottom:10px">Drag to adjust. Changes apply on next Analyze.</div>
+        <div id="formula-sliders-side"></div>
+        <div style="padding:10px 0;border-top:1px solid var(--bd);margin-top:8px">
+          <div style="font-size:11px;color:var(--t2);margin-bottom:8px">Total: <span id="wt-total" style="font-family:'JetBrains Mono',monospace;font-weight:700">100%</span></div>
+          <div style="display:flex;gap:6px">
+            <button class="btn bg btn-sm" style="flex:1" onclick="resetWeights()">Reset</button>
+            <button class="btn bp btn-sm" style="flex:1" onclick="normalizeWeights()">Normalize</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="howto-panel">
+      <div class="side-title">Getting Started</div>
+      <div style="font-size:10px;color:var(--t2);line-height:1.85">
+        <strong style="color:var(--ac)">1.</strong> <strong style="color:var(--t1)">Data is ready</strong> — 2026 bracket and T-Rank stats are built in. No fetch needed.<br><br>
+        <strong style="color:var(--ac)">2.</strong> Click <strong style="color:var(--t1)">⚡ Analyze All</strong> to predict every R64 game instantly, or click any card individually.<br><br>
+        <strong style="color:var(--ac)">3.</strong> The full step-by-step breakdown appears here — stats, edges, seed history, Monte Carlo sims.<br><br>
+        <strong style="color:var(--ac)">4.</strong> Accept the model's pick or <strong style="color:var(--purple)">override it</strong> with your own read.<br><br>
+        <strong style="color:var(--ac)">5.</strong> Visit <strong style="color:var(--t1)">⚙ Formula</strong> to adjust metric weights and re-analyze.
+      </div>
+    </div>
+    <div id="analysis-panel">
+      <div class="ap-placeholder">Click Analyze on any game to see the full prediction breakdown here.</div>
+    </div>
+    <div class="side-panel" id="prog-panel">
+      <div class="side-title">Progress</div>
+      <div id="prog-rows"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════
+const REGIONS = ['East','West','South','Midwest'];
+const SEED_UPSET = {'1v16':0.013,'2v15':0.063,'3v14':0.154,'4v13':0.213,'5v12':0.352,'6v11':0.393,'7v10':0.404,'8v9':0.487};
+const W = {adjOE:0.26, adjDE:0.22, barthag:0.18, wab:0.12, record:0.03, tempo:0.03, seed:0.16};
+const SAMPLE_BRACKET = {
+  East:    [['1 Duke','16 Siena'],['8 Ohio State','9 TCU'],['5 St. John\'s','12 Northern Iowa'],['4 Kansas','13 Cal Baptist'],['6 Louisville','11 South Florida'],['3 Michigan State','14 North Dakota State'],['7 UCLA','10 UCF'],['2 UConn','15 Furman']],
+  West:    [['1 Arizona','16 LIU'],['8 Villanova','9 Utah State'],['5 Wisconsin','12 High Point'],['4 Arkansas','13 Hawaii'],['6 BYU','11 Texas/NC State'],['3 Gonzaga','14 Kennesaw State'],['7 Miami FL','10 Missouri'],['2 Purdue','15 Queens']],
+  South:   [['1 Florida','16 Prairie View A&M/Lehigh'],['8 Clemson','9 Iowa'],['5 Vanderbilt','12 McNeese'],['4 Nebraska','13 Troy'],['6 North Carolina','11 VCU'],['3 Illinois','14 Penn'],['7 Saint Mary\'s','10 Texas A&M'],['2 Houston','15 Idaho']],
+  Midwest: [['1 Michigan','16 UMBC/Howard'],['8 Georgia','9 Saint Louis'],['5 Texas Tech','12 Akron'],['4 Alabama','13 Hofstra'],['6 Tennessee','11 SMU/Miami OH'],['3 Virginia','14 Wright State'],['7 Kentucky','10 Santa Clara'],['2 Iowa State','15 Tennessee State']]
+};
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let bracket   = JSON.parse(JSON.stringify(SAMPLE_BRACKET));
+let results   = {};
+let ffRes     = {};
+let teamData  = {};
+let dataLoaded = false;
+let busyKey   = null;
+let activeKey = null;
+let currentTab = 'bracket';
+
+// ── BartTorvik config cache ──────────────────
+// bartConfig is a persistent snapshot of BartTorvik data for the current
+// session. Once fetched, it is never re-fetched unless the user clicks Refresh.
+// This avoids hammering the proxy on every Analyze All.
+// Structure: { loaded: bool, teams: {[normKey]: rowObj}, fetchedAt: Date|null }
+let bartConfig = { loaded: false, teams: {}, fetchedAt: null };
+
+// Which formula metrics require BartTorvik data to be meaningful
+const BART_REQUIRED_METRICS = new Set(['adjOE', 'adjDE', 'barthag', 'wab', 'tempo']);
+// Metrics that work on ESPN-only data
+const ESPN_ONLY_METRICS = new Set(['record', 'seed']);
+
+// ══════════════════════════════════════════════
+// HARDCODED BARTTORVIK DATA (2026 T-Rank)
+// Pasted from barttorvik.com — covers all 2026 tournament teams.
+// Format: [team, conf, record, wins, losses, adjOE, adjDE, barthag, adjT, wab]
+// ══════════════════════════════════════════════
+const BART_DATA = [
+  ['Duke','ACC','32-2',32,2,128.2,90.8,0.9813,65.8,13.7],
+  ['Michigan','B10','31-3',31,3,127.7,91.1,0.9798,71.2,14.0],
+  ['Arizona','B12','32-2',32,2,126.9,91.4,0.9776,70.0,13.7],
+  ['Florida','SEC','26-7',26,7,126.1,92.3,0.9731,70.4,8.5],
+  ['Houston','B12','28-6',28,6,125.4,92.4,0.9708,63.3,9.0],
+  ['Illinois','B10','24-8',24,8,132.0,98.2,0.9675,65.7,6.6],
+  ['Iowa St.','B12','27-7',27,7,123.8,92.7,0.9655,66.9,7.4],
+  ['Purdue','B10','27-8',27,8,133.3,100.3,0.9635,64.4,9.2],
+  ['Connecticut','BE','29-5',29,5,123.1,95.0,0.9515,64.6,8.8],
+  ['Vanderbilt','SEC','26-8',26,8,127.5,99.4,0.946,69.0,7.3],
+  ['Gonzaga','WCC','30-3',30,3,120.3,94.0,0.9445,68.9,7.4],
+  ['Texas Tech','B12','22-10',22,10,126.3,98.8,0.9438,66.4,5.1],
+  ['Michigan St.','B10','25-7',25,7,122.9,96.2,0.9436,66.0,7.4],
+  ['Virginia','ACC','29-5',29,5,122.3,95.9,0.9425,65.6,7.8],
+  ["St. John's",'BE','28-6',28,6,119.8,94.1,0.9413,69.6,7.3],
+  ['Tennessee','SEC','22-11',22,11,121.5,95.5,0.9407,65.2,4.1],
+  ['Louisville','ACC','23-10',23,10,124.0,98.2,0.9363,69.7,4.0],
+  ['Alabama','SEC','23-9',23,9,129.5,102.8,0.9343,73.0,6.6],
+  ['Arkansas','SEC','26-8',26,8,128.0,101.7,0.9336,71.0,7.5],
+  ['Nebraska','B10','26-6',26,6,117.2,93.5,0.9307,66.8,7.5],
+  ['Wisconsin','B10','24-10',24,10,127.2,101.7,0.9292,68.7,5.4],
+  ['Kansas','B12','23-10',23,10,117.8,94.4,0.9276,67.6,6.3],
+  ['Ohio St.','B10','21-12',21,12,125.2,101.6,0.9169,66.1,2.9],
+  ["Saint Mary's",'WCC','27-5',27,5,119.4,97.6,0.9105,65.3,4.0],
+  ['UCLA','B10','23-11',23,11,124.6,101.8,0.9105,64.7,3.6],
+  ['Iowa','B10','21-12',21,12,122.1,100.2,0.9066,63.0,2.0],
+  ['North Carolina','ACC','24-8',24,8,121.4,100.0,0.9027,68.0,4.9],
+  ['Utah St.','MWC','28-6',28,6,123.0,102.1,0.8951,67.5,4.0],
+  ['Santa Clara','WCC','26-8',26,8,125.0,103.8,0.8949,69.2,2.2],
+  ['Clemson','ACC','24-10',24,10,116.6,97.0,0.8919,64.3,3.2],
+  ['Kentucky','SEC','21-13',21,13,119.9,100.0,0.8898,68.3,3.3],
+  ['BYU','B12','23-11',23,11,124.8,104.4,0.8864,69.8,4.6],
+  ['Miami FL','ACC','25-8',25,8,121.1,101.5,0.8842,67.9,3.9],
+  ['Villanova','BE','24-8',24,8,119.6,100.6,0.8799,64.9,3.9],
+  ['Georgia','SEC','22-10',22,10,124.4,104.8,0.8775,72.0,2.6],
+  ['N.C. State','ACC','20-13',20,13,124.1,104.7,0.876,69.1,0.35],
+  ['Texas A&M','SEC','21-11',21,11,119.9,101.5,0.8719,71.0,1.6],
+  ['SMU','ACC','20-13',20,13,123.0,105.0,0.8605,68.6,-0.01],
+  ['Saint Louis','A10','28-5',28,5,119.5,102.3,0.8558,71.0,1.8],
+  ['Texas','SEC','18-14',18,14,124.0,106.4,0.8534,67.1,-0.2],
+  ['Missouri','SEC','20-12',20,12,119.9,103.1,0.8513,66.4,1.2],
+  ['VCU','A10','27-7',27,7,119.2,103.1,0.8413,68.7,1.7],
+  ['TCU','B12','22-11',22,11,114.9,99.7,0.8365,67.6,2.4],
+  ['South Florida','Amer','25-8',25,8,116.8,101.4,0.8355,71.4,-0.24],
+  ['UCF','B12','21-11',21,11,120.0,105.7,0.8113,69.1,2.1],
+  ['Northern Iowa','MVC','23-12',23,12,109.8,98.6,0.7753,62.2,-5.3],
+  ['Akron','MAC','29-5',29,5,117.2,105.4,0.7723,70.3,-0.19],
+  ['McNeese St.','Slnd','28-5',28,5,113.2,102.2,0.7649,66.1,0.7],
+  ['Miami OH','MAC','31-1',31,1,116.7,107.6,0.7173,69.9,2.5],
+  ['Hofstra','CAA','24-10',24,10,113.2,104.9,0.7054,64.7,-4.7],
+  ['High Point','BSth','30-4',30,4,115.7,107.5,0.6992,69.9,-1.4],
+  ['Cal Baptist','WAC','25-8',25,8,107.5,100.3,0.6892,65.9,-2.3],
+  ['North Dakota St.','Sum','27-7',27,7,111.5,106.0,0.6397,66.3,-3.3],
+  ['Hawaii','BW','24-8',24,8,106.9,101.9,0.6355,69.6,-3.7],
+  ['Wright St.','Horz','23-11',23,11,112.4,109.1,0.5857,67.0,-6.6],
+  ['Idaho','BSky','21-14',21,14,108.9,106.2,0.5708,67.4,-8.8],
+  ['Troy','SB','22-11',22,11,110.7,109.0,0.5437,65.1,-6.1],
+  ['Kennesaw St.','CUSA','21-13',21,13,110.9,109.4,0.5395,71.2,-7.9],
+  ['Penn','Ivy','18-11',18,11,106.6,105.4,0.53,69.0,-6.0],
+  ['Siena','MAAC','23-11',23,11,107.2,108.9,0.4543,64.6,-7.8],
+  ['UMBC','AE','24-9',24,9,108.2,110.1,0.45,66.0,-5.1],
+  ['Furman','SC','22-12',22,12,106.9,109.0,0.4443,65.8,-8.7],
+  ['Queens','ASun','21-13',21,13,114.7,117.1,0.4401,69.5,-7.0],
+  ['Howard','MEAC','24-10',24,10,104.4,106.9,0.4321,69.1,-6.9],
+  ['Tennessee St.','OVC','23-9',23,9,107.8,111.9,0.3958,70.1,-5.6],
+  ['LIU','NEC','24-10',24,10,103.7,109.8,0.3403,67.8,-5.8],
+  ['Prairie View A&M','SWAC','18-17',18,17,101.5,111.4,0.2555,70.8,-12.5],
+  ['Lehigh','Pat','18-16',18,16,102.6,112.8,0.2512,66.8,-12.0],
+];
+
+// ── Load hardcoded BartTorvik data into teamData ──────────────────
+// Called once on init. No fetch needed — data is baked in from the
+// pasted 2026 T-Rank table. Falls back to live fetch if user wants refresh.
+function loadHardcodedBart() {
+  let cnt = 0;
+  BART_DATA.forEach(([team, conf, rec, wins, losses, adjOE, adjDE, barthag, adjT, wab]) => {
+    const e = {
+      team, conf, record: rec, wins, losses,
+      adjOE, adjDE, barthag, adjT, wab,
+      source: 'barttorvik_hardcoded'
+    };
+    storeTeam(e);
+    [nrm(team), nrm2(team), toAbbr(team)].forEach(k => { if (k) bartConfig.teams[k] = e; });
+    cnt++;
+  });
+  bartConfig.loaded = true;
+  bartConfig.fetchedAt = new Date();
+  bartConfig.source = 'hardcoded';
+  // Restore full default weights now that Bart data is available
+  Object.assign(W, DEFAULT_WEIGHTS);
+  // Update status bar
+  sd('d-bt', 'live');
+  ss('s-bt', cnt + ' teams (built-in)');
+  return cnt;
+}
+
+// ══════════════════════════════════════════════
+// DATA FETCH
+// ══════════════════════════════════════════════
+async function fetchAllData() {
+  // If we have hardcoded Bart data, skip the fetch unless user explicitly wants live
+  if (bartConfig.loaded && bartConfig.source === 'hardcoded' && dataLoaded) return;
+  _doFetch();
+}
+
+function refetchData() {
+  dataLoaded = false;
+  teamData = {};
+  bartConfig = { loaded: false, teams: {}, fetchedAt: null };
+  document.getElementById('btn-fetch').style.display = '';
+  document.getElementById('btn-refetch').style.display = 'none';
+  _doFetch();
+}
+
+async function _doFetch() {
+  const fetchBtn = document.getElementById('btn-fetch');
+  if (fetchBtn) fetchBtn.disabled = true;
+  sd('d-bt','loading'); ss('s-bt','Fetching...');
+  document.getElementById('s-note').textContent = '';
+
+  // BartTorvik — try multiple CORS proxies in sequence
+  const BT_URL = 'https://barttorvik.com/trank.php?year=2025&json=1';
+  const BT_PROXIES = [
+    u => 'https://api.allorigins.win/get?url=' + encodeURIComponent(u),
+    u => 'https://corsproxy.io/?' + encodeURIComponent(u),
+    u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+  ];
+  let btLoaded = false;
+  for (const makeUrl of BT_PROXIES) {
+    if (btLoaded) break;
+    try {
+      ss('s-bt', 'Trying proxy ' + (BT_PROXIES.indexOf(makeUrl)+1) + '/3...');
+      const resp = await fetch(makeUrl(BT_URL), {signal: AbortSignal.timeout(8000)});
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const text = await resp.text();
+      // allorigins wraps in {contents:...}, others return raw JSON
+      let rows;
+      try {
+        const wrap = JSON.parse(text);
+        rows = typeof wrap.contents === 'string' ? JSON.parse(wrap.contents) : (Array.isArray(wrap) ? wrap : wrap.contents);
+      } catch(e) {
+        rows = JSON.parse(text);
+      }
+      if (!Array.isArray(rows) || rows.length < 10) throw new Error('bad data shape');
+      // BartTorvik array format:
+      // [0]=rank [1]=team [2]=conf [3]=record [4]=adjOE [5]=adjDE [6]=barthag [7]=adjT
+      // [8]=eFG_o [9]=eFG_d [10]=TO_o [11]=TO_d [12]=OR_o [13]=OR_d [14..19]=... [20]=wab
+      let cnt = 0;
+      bartConfig.teams = {}; // reset before repopulating
+      rows.forEach(row => {
+        if (!Array.isArray(row) || !row[1]) return;
+        const e = {
+          team: row[1], conf: row[2], record: row[3],
+          adjOE: +row[4]||null, adjDE: +row[5]||null, barthag: +row[6]||null,
+          adjT: +row[7]||null, efg_o: +row[8]||null, efg_d: +row[9]||null,
+          to_o: +row[10]||null, or_o: +row[12]||null,
+          wab: row[20]!=null ? +row[20] : null,
+          source: 'barttorvik'
+        };
+        storeTeam(e);
+        // Also store in bartConfig under all normalized keys
+        [nrm(e.team), nrm2(e.team), toAbbr(e.team)].forEach(k => { if (k) bartConfig.teams[k] = e; });
+        cnt++;
+      });
+      bartConfig.loaded = true;
+      bartConfig.fetchedAt = new Date();
+      // Restore full default weights now that Bart data is available
+      Object.assign(W, DEFAULT_WEIGHTS);
+      ss('s-bt', cnt + ' teams'); sd('d-bt','live');
+      btLoaded = true;
+    } catch(err) {
+      console.warn('BartTorvik proxy failed:', makeUrl(BT_URL).slice(0,50), err.message);
+    }
+  }
+  if (!btLoaded) {
+    ss('s-bt', 'Unavailable — using seed estimates');
+    sd('d-bt', 'err');
+    document.getElementById('s-note').textContent = '⚠ BartTorvik unreachable — predictions use historical seed averages';
+  }
+
+  // ESPN
+  try {
+    const resp = await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams?limit=500');
+    const j = await resp.json();
+    const teams = j.sports?.[0]?.leagues?.[0]?.teams || [];
+    let cnt = 0;
+    teams.forEach(item => {
+      const t = item.team; if (!t) return;
+      const rec = t.record?.items?.[0]?.summary || '';
+      const wins = parseInt(rec.split('-')[0]) || 0;
+      const losses = parseInt(rec.split('-')[1]) || 0;
+      const e = { team: t.displayName, record: rec, wins, losses, source: 'espn' };
+      // Merge ESPN record into existing bartorvik entry or create new
+      [nrm(t.displayName||''), nrm(t.shortDisplayName||''), nrm(t.abbreviation||'')].forEach(k => {
+        if (!k) return;
+        if (teamData[k]) { teamData[k].wins = wins; teamData[k].losses = losses; teamData[k].record = rec; }
+        else teamData[k] = { ...e };
+      });
+      cnt++;
+    });
+  } catch(err) {
+    console.warn('ESPN:', err.message);
+  }
+
+  const m = countMatched();
+  ss('s-match', String(m));
+  sd('d-match', m > 10 ? 'live' : m > 0 ? 'loading' : 'err');
+  if (m > 0) {
+    dataLoaded = true;
+    document.getElementById('s-note').textContent = '✓ ' + new Date().toLocaleTimeString();
+    const fb = document.getElementById('btn-fetch');
+    if (fb) fb.style.display = 'none';
+    const rb = document.getElementById('btn-refetch');
+    if (rb) rb.style.display = '';
+    // Re-render formula sliders so Bart-dependent ones unlock if data loaded
+    if (currentTab === 'formula') renderFormulaSliders();
+  } else {
+    const fb = document.getElementById('btn-fetch');
+    if (fb) fb.disabled = false;
+  }
+  renderBracket(); renderProgress();
+}
+
+function storeTeam(e) {
+  if (!e.team) return;
+  [nrm(e.team), nrm2(e.team), toAbbr(e.team)].forEach(k => { if (k) teamData[k] = e; });
+}
+
+// Multiple normalization strategies for better fuzzy matching
+function nrm(s) {
+  if (!s) return '';
+  return s.toLowerCase()
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\bstate\b/g,'st').replace(/\buniversity\b/g,'').replace(/\buniv\b/g,'')
+    .replace(/\bnorth\b/g,'n').replace(/\bsouth\b/g,'s').replace(/\beast\b/g,'e').replace(/\bwest\b/g,'w')
+    .replace(/\s+/g,' ').trim();
+}
+function nrm2(s) { return s ? s.toLowerCase().replace(/[^a-z0-9]/g,'') : ''; }
+function toAbbr(s) { return s ? s.toLowerCase().replace(/[^a-z]/g,'').slice(0,6) : ''; }
+
+function lookupTeam(raw) {
+  if (!raw) return null;
+  const clean = raw.replace(/^\d+\s*/,'').trim();
+  const tries = [
+    nrm(clean), nrm2(clean), toAbbr(clean),
+    clean.toLowerCase().replace(/state/,'st').replace(/[^a-z0-9 ]/g,' ').trim(),
+    nrm(clean).replace(/\s/g,''),
+    clean.toLowerCase().replace(/\./g,'').replace(/\s+/g,' ').trim()
+  ];
+  for (const k of tries) { if (k && teamData[k]) return teamData[k]; }
+  // Fuzzy
+  const tgt = nrm(clean);
+  let best = null, bestS = 0;
+  for (const [key, data] of Object.entries(teamData)) {
+    if (!data.adjOE && !data.barthag) continue;
+    const sc = fuzzy(tgt, key);
+    if (sc > bestS && sc > 0.58) { bestS = sc; best = data; }
+  }
+  return best;
+}
+
+function fuzzy(a, b) {
+  const wa = a.split(' ').filter(Boolean), wb = b.split(' ').filter(Boolean);
+  let m = 0;
+  for (const w of wa) if (wb.some(bw => bw.includes(w) || w.includes(bw))) m++;
+  return wa.length ? m / Math.max(wa.length, wb.length) : 0;
+}
+
+function countMatched() {
+  let n = 0;
+  REGIONS.forEach(r => bracket[r].forEach(([t1,t2]) => {
+    if (t1 && lookupTeam(t1)) n++;
+    if (t2 && lookupTeam(t2)) n++;
+  }));
+  return n;
+}
+
+// ══════════════════════════════════════════════
+// PREDICTION ENGINE
+// ══════════════════════════════════════════════
+function sig(x) { return 1/(1+Math.exp(-x)); }
+let _z = null;
+function randn() {
+  if (_z !== null) { const z=_z; _z=null; return z; }
+  const u1=Math.random(), u2=Math.random(), m=Math.sqrt(-2*Math.log(u1));
+  _z = m*Math.sin(2*Math.PI*u2); return m*Math.cos(2*Math.PI*u2);
+}
+
+function buildPrediction(t1raw, t2raw, rnd) {
+  const _s1 = parseInt(t1raw.match(/^(\d+)/)?.[1]);
+  const _s2 = parseInt(t2raw.match(/^(\d+)/)?.[1]);
+  const seed1 = (!_s1 || isNaN(_s1)) ? 8 : _s1;
+  const seed2 = (!_s2 || isNaN(_s2)) ? 8 : _s2;
+  const n1 = t1raw.replace(/^\d+\s*/,'').trim();
+  const n2 = t2raw.replace(/^\d+\s*/,'').trim();
+  const d1 = lookupTeam(t1raw);
+  const d2 = lookupTeam(t2raw);
+
+  // Seed-based stat estimates — used when live data not loaded.
+  // Derived from historical avg efficiency by seed across 2015–2024 tournaments.
+  // This ensures the model produces sensible probabilities even without API data.
+  // Seed-based stat estimates: each seed's historical avg efficiency.
+  // Spread is intentionally moderate — real stats will override these.
+  const SEED_OE = [0,120,117,114,112,110,108,107,106,105,104,103,102,101,100, 99, 98];
+  const SEED_DE = [0, 92, 94, 96, 97, 98, 99,100,101,102,103,104,105,106,107,108,109];
+  const SEED_BA = [0,.96,.91,.87,.83,.79,.75,.71,.68,.64,.60,.57,.53,.50,.46,.43,.39];
+  const SEED_WP = [0,.93,.87,.81,.76,.71,.67,.63,.59,.56,.52,.49,.45,.42,.38,.35,.31];
+  function seedEst(seed) {
+    const s = Math.max(1, Math.min(16, (isNaN(seed)||!seed) ? 8 : seed));
+    return { adjOE:SEED_OE[s], adjDE:SEED_DE[s], barthag:SEED_BA[s],
+             wab:null, wins:Math.round(SEED_WP[s]*32), losses:Math.round((1-SEED_WP[s])*32),
+             adjT:68.5, isSeedEst:true };
+  }
+  // Use real data if available; fall back to seed estimates (NOT flat averages)
+  const d1e = d1 || seedEst(seed1);
+  const d2e = d2 || seedEst(seed2);
+  const oe1=d1e.adjOE, oe2=d2e.adjOE;
+  const de1=d1e.adjDE, de2=d2e.adjDE;
+  const ba1=d1e.barthag, ba2=d2e.barthag;
+  const tp1=d1e.adjT||68.5, tp2=d2e.adjT||68.5;
+  const wb1=d1?.wab??null, wb2=d2?.wab??null;
+  const hasWAB = wb1!=null && wb2!=null;
+  const wins1=d1e.wins||0, loss1=d1e.losses||0;
+  const wins2=d2e.wins||0, loss2=d2e.losses||0;
+  const wp1=(wins1+loss1)>0 ? wins1/(wins1+loss1) : (d1e.isSeedEst ? SEED_WP[Math.min(16,seed1)] : 0.5);
+  const wp2=(wins2+loss2)>0 ? wins2/(wins2+loss2) : (d2e.isSeedEst ? SEED_WP[Math.min(16,seed2)] : 0.5);
+
+  // Scaled differentials (T1 positive = T1 advantage)
+  const dOE  = (oe1-oe2)/10;
+  const dDE  = (de2-de1)/10;   // inverted: lower DE better
+  const dBA  = (ba1-ba2)*5;
+  const dWAB = hasWAB ? (wb1-wb2)/6 : 0;
+  const dRec = wp1-wp2;
+  const dTp  = (tp1-tp2)/12;
+
+  // Seed prior — only meaningful for R64 (known matchups).
+  // For later rounds, seed context is already embedded in efficiency stats;
+  // using a seed prior would wrongly penalize upset winners that advanced.
+  const isR64 = !rnd || rnd === 0;
+  const sk = `${Math.min(seed1,seed2)}v${Math.max(seed1,seed2)}`;
+  const upsetP = isR64 ? (SEED_UPSET[sk] || 0.35) : 0.35;  // 0.35 = neutral in later rounds
+  const favP   = isR64 ? (seed1 < seed2 ? 1-upsetP : upsetP) : 0.5; // no seed prior bias in later rounds
+  const dSeed  = (favP-0.5)*2;
+
+  // Weights: if no WAB, redistribute to seed factor.
+  // For later rounds, zero out seed weight — efficiency stats are the only signal.
+  const Wf = {...W};
+  if (!hasWAB) { Wf.seed += Wf.wab; Wf.wab = 0; }
+  if (!isR64) {
+    // Redistribute seed weight evenly across efficiency stats
+    const seedW = Wf.seed;
+    Wf.adjOE += seedW * 0.40;
+    Wf.adjDE += seedW * 0.35;
+    Wf.barthag += seedW * 0.25;
+    Wf.seed = 0;
+  }
+
+  // When Bart data is absent, the seed estimates ARE the data — so we need
+  // the seed prior to dominate. Boost it by redistributing all Bart-dependent
+  // weights (OE/DE/barthag/wab) into seed + record so the model actually
+  // picks the correctly-seeded team rather than calling everything 50/50.
+  const bothEst = !d1?.adjOE && !d2?.adjOE;
+  const oneEst  = (!d1?.adjOE || !d2?.adjOE) && !bothEst;
+  if (bothEst && isR64) {
+    // No real stats at all — let the historical seed prior carry most weight.
+    // Redistribute OE+DE+barthag+wab into seed (70%) and record (30%)
+    const btPool = Wf.adjOE + Wf.adjDE + Wf.barthag + Wf.wab;
+    Wf.adjOE = 0; Wf.adjDE = 0; Wf.barthag = 0; Wf.wab = 0;
+    Wf.seed   += btPool * 0.70;
+    Wf.record += btPool * 0.30;
+  }
+
+  const comps = [
+    {name:'Offensive Efficiency', val:dOE,  w:Wf.adjOE,   c:dOE*Wf.adjOE},
+    {name:'Defensive Efficiency', val:dDE,  w:Wf.adjDE,   c:dDE*Wf.adjDE},
+    {name:'Power Rating (Barthag)',val:dBA, w:Wf.barthag, c:dBA*Wf.barthag},
+    {name:'WAB – Résumé Quality', val:dWAB, w:Wf.wab,    c:dWAB*Wf.wab},
+    {name:'Win Percentage',       val:dRec, w:Wf.record,  c:dRec*Wf.record},
+    {name:'Tempo / Pace',         val:dTp,  w:Wf.tempo,   c:dTp*Wf.tempo},
+    {name:'Seed History Prior',   val:dSeed,w:Wf.seed,    c:dSeed*Wf.seed},
+  ];
+  const rawScore = comps.reduce((s,c) => s + (isNaN(c.c) ? 0 : c.c), 0);
+  const logitP = sig((isNaN(rawScore) ? 0 : rawScore) * 1.8);
+
+  // Monte Carlo — 1,000 simulations to model game-day variance.
+  // When BOTH teams lack Bart data (seed-only), noising stat differentials
+  // is meaningless (all Wf weights are 0, so every sim is identical).
+  // Instead, use a two-step Bernoulli approach in probability space:
+  //   1. Sample a "game probability": pGame = favP + N(0, σ=0.08) + tiny record nudge
+  //   2. Flip a weighted coin — did team1 win this sim?
+  // σ=0.08 calibrated: 8v9 → ~500/1000, 5v12 → ~660/1000, 1v16 → ~965/1000,
+  // with genuine run-to-run variability (never the same number twice).
+  let mcW, simP, sigma;
+  const SIMS = 1000;
+  if (bothEst) {
+    sigma = 0.08;
+    mcW = 0;
+    const recEdge = dRec * 0.04; // small win% nudge, seed prior still dominates
+    for (let i = 0; i < SIMS; i++) {
+      // Step 1: sample uncertain win probability around historical seed rate
+      const pGame = Math.max(0.01, Math.min(0.99, favP + randn() * sigma + recEdge));
+      // Step 2: Bernoulli trial — flip weighted coin for actual game outcome
+      if (Math.random() < pGame) mcW++;
+    }
+    simP = mcW / SIMS;
+  } else {
+    // Real Bart data: noise the stat differentials directly
+    sigma = oneEst ? 2.5 : 4.5;
+    mcW = 0;
+    for (let i = 0; i < SIMS; i++) {
+      const n = () => randn() * sigma;
+      const sdOE=(oe1+n()-oe2-n())/10, sdDE=(de2+n()-de1-n())/10;
+      const sdBA=(ba1+randn()*.05-ba2-randn()*.05)*5;
+      const sS=sdOE*Wf.adjOE+sdDE*Wf.adjDE+sdBA*Wf.barthag+dWAB*Wf.wab+dRec*Wf.record+dSeed*Wf.seed;
+      if (sig(sS*2.4)>0.5) mcW++;
+    }
+    simP = mcW / SIMS;
+  }
+  const blended = logitP*0.6 + simP*0.4;
+
+  // Clamp — only applied in R64 where we have 40+ years of historical seed-matchup data.
+  // In later rounds, any seed combo is possible; we trust the stats.
+  let minP, maxP, clamped, wasClamped;
+  if (isR64) {
+    // Wider range so stats can genuinely flip upset-prone matchups (5v12, 6v11, 7v10, 8v9).
+    // 1v16 / 2v15 still have a high floor — they almost never lose.
+    if (seed1<=seed2) {
+      minP = Math.max(0.10, 1 - upsetP * 2.8);
+      maxP = 1 - upsetP * 0.10;
+    } else {
+      minP = upsetP * 0.10;
+      maxP = Math.min(0.90, upsetP * 2.8);
+    }
+    clamped = Math.max(minP, Math.min(maxP, blended));
+    wasClamped = Math.abs(clamped-blended) > 0.005;
+  } else {
+    // No clamp for later rounds — but do enforce a sanity range of 5%–95%
+    minP = 0.05; maxP = 0.95;
+    clamped = Math.max(minP, Math.min(maxP, blended));
+    wasClamped = false;
+  }
+
+  const prob1 = Math.round(clamped*100);
+  // Use logitP (model probability) to determine the winner — NOT the blended/MC value.
+  // This prevents the pick from flipping on re-analyze just because the MC sim
+  // happened to land 497 vs 502 for a near-50/50 game like 8v9.
+  // The MC result is displayed for informational variance but doesn't change the pick.
+  const logitWinner = logitP >= 0.5 ? n1 : n2;
+  const modelWinner = logitWinner;
+  const modelLoser  = modelWinner===n1 ? n2 : n1;
+  const winProb = Math.max(prob1, 100-prob1);
+
+  const pace=(tp1+tp2)/2;
+  const pts1=Math.round(((oe1+de2)/2/100)*pace);
+  const pts2=Math.round(((oe2+de1)/2/100)*pace);
+  const scoreW=modelWinner===n1?pts1:pts2;
+  const scoreL=modelWinner===n1?pts2:pts1;
+  const upsetAlert=(modelWinner===n1&&seed1>seed2)||(modelWinner===n2&&seed2>seed1);
+
+  return {
+    winner:modelWinner, loser:modelLoser, n1, n2, seed1, seed2,
+    winProb, prob1, scoreW, scoreL, upsetAlert,
+    d1, d2, overridden:false, overrideWinner:null,
+    usedRealData:!!(d1?.adjOE||d2?.adjOE), usedSeedEst:(!d1?.adjOE||!d2?.adjOE),
+    trace:{
+      stats:{oe1,oe2,de1,de2,ba1,ba2,tp1,tp2,wb1,wb2,wp1,wp2,wins1,loss1,wins2,loss2,hasWAB,d1ok:!!d1?.adjOE,d2ok:!!d2?.adjOE},
+      diffs:{dOE,dDE,dBA,dWAB,dRec,dTp,hasWAB},
+      seed:{sk,upsetP,favP,dSeed,seed1,seed2,n1,n2,isFav1:seed1<seed2},
+      weightsUsed:{...Wf},
+      scoreCalc:{comps,rawScore},
+      sigStep:{logitP,formula:`1/(1+e^(−${rawScore.toFixed(3)}×2.4)) = ${(logitP*100).toFixed(1)}%`},
+      mcStep:{SIMS,sigma,mcW,simP,logitP,blended,formula:`${(logitP*100).toFixed(1)}%×60% + ${(simP*100).toFixed(1)}%×40% = ${(blended*100).toFixed(1)}%`},
+      clampStep:{minP,maxP,blended,clamped,wasClamped,sk,seed1,seed2,n1,n2},
+      projStep:{pace,oe1,de1,oe2,de2,pts1,pts2,winner:modelWinner,loser:modelLoser,scoreW,scoreL}
+    }
+  };
+}
+
+// ══════════════════════════════════════════════
+// ANALYZE ACTIONS
+// ══════════════════════════════════════════════
+function analyzeGame(region, rn, idx, evt) {
+  if (evt) { evt.stopPropagation(); }
+  if (busyKey) return;
+  const game = getGame(region, rn, idx);
+  if (!game || !game[0] || !game[1] || game[0]==='TBD' || game[1]==='TBD') return;
+  const key = `${region}-${rn}-${idx}`;
+  busyKey = key;
+  renderBracket();
+  setTimeout(() => {
+    const r = buildPrediction(game[0], game[1], rn);
+    setRes(region, rn, idx, r);
+    activeKey = key;
+    showAnalysis(region, rn, idx, r);
+    busyKey = null;
+    renderBracket(); renderProgress(); renderUpsets();
+  }, 20);
+}
+
+async function analyzeRound(region, rn, evt) {
+  if (evt) evt.stopPropagation();
+  if (busyKey) return;
+  const cnt = [8,4,2,1][rn]||0;
+  for (let idx=0; idx<cnt; idx++) {
+    const game = getGame(region, rn, idx);
+    if (!game || !game[0] || !game[1] || game[0].includes('Winner') || game[1].includes('Winner')) continue;
+    busyKey = `${region}-${rn}-${idx}`;
+    renderBracket();
+    await sleep(10);
+    const r = buildPrediction(game[0], game[1], rn);
+    setRes(region, rn, idx, r);
+    renderBracket();
+  }
+  busyKey = null;
+  renderBracket(); renderProgress(); renderUpsets(); updateFFTab();
+}
+
+async function analyzeAll() {
+  if (busyKey) return;
+  const btn = document.getElementById('btn-all');
+  btn.disabled = true;
+  showProg(true);
+
+  // Build all jobs: R64, R32, Sweet16, Elite8 for each region
+  const ROUND_CNTS = [8, 4, 2, 1];
+  const ROUND_NAMES = ['R64', 'R32', 'Sweet 16', 'Elite 8'];
+  let jobs = [];
+  for (let rn = 0; rn < 4; rn++) {
+    for (const region of REGIONS) {
+      for (let idx = 0; idx < ROUND_CNTS[rn]; idx++) {
+        jobs.push({region, rn, idx});
+      }
+    }
+  }
+  // Add Final Four games
+  jobs.push({ff:0}, {ff:1}, {ff:'champ'});
+
+  const total = jobs.length;
+  let done = 0;
+
+  for (const job of jobs) {
+    // ── Final Four / Champ jobs ──────────────────────────────
+    if (job.ff !== undefined) {
+      if (job.ff === 'champ') {
+        const t1 = ffRes[0]?.winner, t2 = ffRes[1]?.winner;
+        if (t1 && t2 && !ffRes.champ?.overridden) {
+          setProg(done, total, 'Championship');
+          await sleep(8);
+          ffRes.champ = buildPrediction(findRaw(t1)||t1, findRaw(t2)||t2, 5);
+          renderBracket(); updateFFTab();
+        }
+      } else {
+        const game = getFFGame(job.ff);
+        if (game && !game[0].includes('Winner') && !ffRes[job.ff]?.overridden) {
+          setProg(done, total, 'Final Four: ' + game[0].replace(/^\d+\s*/,'') + ' vs ' + game[1].replace(/^\d+\s*/,''));
+          await sleep(8);
+          ffRes[job.ff] = buildPrediction(game[0], game[1], 4);
+          renderBracket(); updateFFTab();
+        }
+      }
+      done++;
+      continue;
+    }
+
+    // ── Regular bracket jobs ─────────────────────────────────
+    const {region, rn, idx} = job;
+    const existing = results[region]?.[rn]?.[idx];
+
+    // Skip if manually overridden — never overwrite user picks
+    if (existing?.overridden) { done++; continue; }
+
+    const game = getGame(region, rn, idx);
+    // For R32+ we need both prior-round winners to exist
+    if (!game || !game[0] || !game[1] || game[0].trim()==='' || game[1].trim()==='') { done++; continue; }
+
+    setProg(done, total, ROUND_NAMES[rn] + ' · ' + region + ': ' + game[0].replace(/^\d+\s*/,'') + ' vs ' + game[1].replace(/^\d+\s*/,''));
+    busyKey = region + '-' + rn + '-' + idx;
+    renderBracket();
+    await sleep(8);
+    setRes(region, rn, idx, buildPrediction(game[0], game[1], rn));
+    busyKey = null;
+    done++;
+    renderBracket();
+  }
+
+  busyKey = null;
+  setProg(total, total, 'All done!');
+  await sleep(500);
+  showProg(false);
+  btn.disabled = false;
+  renderBracket(); renderProgress(); renderUpsets(); updateFFTab();
+}
+
+function analyzeFF(idx) {
+  const game = getFFGame(idx);
+  if (!game || game[0].includes('Winner') || game[1].includes('Winner')) return;
+  const r = buildPrediction(game[0], game[1], 4);
+  ffRes[idx] = r;
+  showAnalysis(null, null, null, r);
+  renderUpsets(); updateFFTab();
+}
+
+function analyzeChamp() {
+  const t1 = ffRes[0]?.winner, t2 = ffRes[1]?.winner;
+  if (!t1 || !t2) return;
+  const r = buildPrediction(findRaw(t1)||t1, findRaw(t2)||t2, 5);
+  ffRes.champ = r;
+  showAnalysis(null, null, null, r);
+  renderUpsets(); updateFFTab();
+}
+
+// ══════════════════════════════════════════════
+// OVERRIDE
+// ══════════════════════════════════════════════
+function pickWinner(region, rn, idx, teamName) {
+  const r = results[region]?.[rn]?.[idx];
+  if (!r) return;
+  const modelWinner = r.prob1 >= 50 ? r.n1 : r.n2;
+  const updated = {
+    ...r,
+    winner: teamName,
+    loser: teamName === r.n1 ? r.n2 : r.n1,
+    overridden: teamName !== modelWinner,
+    overrideWinner: teamName
+  };
+  results[region][rn][idx] = updated;
+
+  // Clear all downstream rounds in this region that depended on this game
+  // Round rn feeds into round rn+1. The game at idx in round rn feeds into
+  // game Math.floor(idx/2) in round rn+1.
+  clearDownstream(region, rn, idx);
+
+  // If the active analysis was in a downstream game, clear it from sidebar too
+  if (activeKey) {
+    const [akReg, akRn, akIdx] = activeKey.split('-');
+    const stillExists = results[akReg]?.[parseInt(akRn)]?.[parseInt(akIdx)];
+    if (!stillExists) {
+      activeKey = null;
+      document.getElementById('howto-panel').style.display = '';
+      document.getElementById('analysis-panel').innerHTML =
+        '<div class="ap-placeholder" style="padding:20px;color:var(--t2);font-size:11px;text-align:center;line-height:1.7">' +
+        '⚠️ Downstream results cleared.<br>Click any game to re-analyze with the updated bracket.' +
+        '</div>';
+    }
+  }
+
+  renderBracket(); renderUpsets(); updateFFTab();
+  if (currentTab === 'upsets') renderUpsets();
+  showAnalysis(region, rn, idx, updated);
+}
+
+function pickFF(ffIdx, teamName) {
+  const r = ffIdx === 'champ' ? ffRes.champ : ffRes[ffIdx];
+  if (!r) return;
+  const modelWinner = r.prob1 >= 50 ? r.n1 : r.n2;
+  const updated = {
+    ...r,
+    winner: teamName,
+    loser: teamName === r.n1 ? r.n2 : r.n1,
+    overridden: teamName !== modelWinner,
+    overrideWinner: teamName
+  };
+  if (ffIdx === 'champ') {
+    ffRes.champ = updated;
+  } else {
+    ffRes[ffIdx] = updated;
+    // Clear championship if it depended on this semifinal
+    if (ffRes.champ) delete ffRes.champ;
+  }
+  renderUpsets(); updateFFTab();
+  showAnalysisFF(ffIdx, updated);
+}
+
+function showStoredFF(ffIdx) {
+  const r = ffIdx === 'champ' ? ffRes.champ : ffRes[ffIdx];
+  if (!r) return;
+  showAnalysisFF(ffIdx, r);
+}
+
+function showAnalysisFF(ffIdx, r) {
+  document.getElementById('howto-panel').style.display = 'none';
+  const ap = document.getElementById('analysis-panel');
+  try {
+    ap.innerHTML = buildSidebar(null, null, null, r, ffIdx);
+    renderWeightSummary(r);
+  } catch(e) {
+    console.error('showAnalysisFF error:', e);
+    ap.innerHTML = '<div style="padding:16px;color:var(--red);font-size:11px">' +
+      '<strong>⚠ Display error</strong><br>' + e.message + '</div>';
+  }
+}
+
+function clearDownstream(region, startRn, startIdx) {
+  // Walk forward through rounds clearing any game that received this winner
+  let affectedIdxs = [startIdx];
+  for (let rn = startRn + 1; rn <= 3; rn++) {
+    const nextIdxs = [];
+    affectedIdxs.forEach(i => {
+      const ni = Math.floor(i / 2);
+      if (!nextIdxs.includes(ni)) nextIdxs.push(ni);
+      // Clear this game's result (it depended on a changed prior round)
+      if (results[region]?.[rn]?.[ni] && !results[region][rn][ni].overridden) {
+        delete results[region][rn][ni];
+      } else if (results[region]?.[rn]?.[ni]?.overridden) {
+        // Also clear overridden ones since the teams have changed
+        delete results[region][rn][ni];
+      }
+    });
+    affectedIdxs = nextIdxs;
+  }
+  // If Elite 8 (rn=3) was cleared, clear Final Four results too
+  if (startRn <= 3) {
+    const regionIdx = REGIONS.indexOf(region);
+    if (regionIdx >= 0) {
+      // Each region feeds one semifinal slot
+      const ffIdx = regionIdx <= 1 ? 0 : 1; // East/West=FF0, South/Midwest=FF1
+      delete ffRes[ffIdx];
+      delete ffRes.champ;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// RENDER BRACKET
+// ══════════════════════════════════════════════
+function renderBracket() {
+  try {
+    var html = '';
+    for (var ri = 0; ri < REGIONS.length; ri++) {
+      html += renderRegion(REGIONS[ri]);
+    }
+    var el = document.getElementById('bracket-el');
+    if (el) {
+      el.innerHTML = html;
+    } else {
+      console.error('bracket-el not found');
+    }
+    updateCount();
+  } catch(e) {
+    console.error('renderBracket error:', e.message, e.stack);
+    var el = document.getElementById('bracket-el');
+    if (el) el.innerHTML = '<div style="color:#e63946;padding:20px;font-family:monospace">Render error: ' + e.message + '<br><small>' + (e.stack||'') + '</small></div>';
+  }
+}
+
+function renderRegion(region) {
+  var r64 = bracket[region] || [];
+  var dis = busyKey ? 'disabled' : '';
+
+  // Gather winners for later rounds — with seed prefix so seed# shows in bracket
+  function gw(rn, idx) {
+    var res = results[region] && results[region][rn] && results[region][rn][idx];
+    if (!res) return '';
+    var name = res.winner;
+    // Re-attach seed so the slot() renders the seed number correctly
+    var raw = findRaw(name, region);
+    if (raw) return raw;
+    var seed = (res.winner === res.n1) ? res.seed1 : res.seed2;
+    return seed ? (seed + ' ' + name) : name;
+  }
+
+  var r32 = [[gw(0,0),gw(0,1)],[gw(0,2),gw(0,3)],[gw(0,4),gw(0,5)],[gw(0,6),gw(0,7)]];
+  var s16 = [[gw(1,0),gw(1,1)],[gw(1,2),gw(1,3)]];
+  var e8  = [[gw(2,0),gw(2,1)]];
+
+  var rnds = [
+    {lbl:'R64',    games:r64, rn:0},
+    {lbl:'R32',    games:r32, rn:1},
+    {lbl:'Sweet16',games:s16, rn:2},
+    {lbl:'Elite8', games:e8,  rn:3}
+  ];
+
+  var mt = 0;
+  for (var i=0; i<r64.length; i++) {
+    if (r64[i] && r64[i][0] && lookupTeam(r64[i][0])) mt++;
+  }
+  var badge = dataLoaded ? '<span class="r-badge">' + mt + '/8 matched</span>' : '';
+
+  var html = '<div class="region">';
+  html += '<div class="r-hdr">';
+  html += '<span class="r-name">' + region + '</span>' + badge;
+  html += '<div class="r-line"></div>';
+  // no per-region R64 button
+  html += '</div>';
+  html += '<div class="rounds">';
+
+  for (var ri = 0; ri < rnds.length; ri++) {
+    var rnd = rnds[ri];
+    html += '<div class="rcol">';
+    html += '<div class="rlbl-row"><span class="rlbl">' + rnd.lbl + '</span>';
+    // no per-round lightning bolt
+    html += '</div>';
+    for (var idx = 0; idx < rnd.games.length; idx++) {
+      html += renderCard(region, rnd.rn, idx, rnd.games[idx]);
+    }
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  return html;
+}
+
+function renderCard(region, rn, idx, game) {
+  var t1raw = (game && game[0]) ? game[0] : '';
+  var t2raw = (game && game[1]) ? game[1] : '';
+  var n1 = t1raw ? t1raw.replace(/^\d+\s*/,'').trim() : '';
+  var n2 = t2raw ? t2raw.replace(/^\d+\s*/,'').trim() : '';
+  var r = results[region] && results[region][rn] ? results[region][rn][idx] : null;
+  // If stored result teams don't match current game teams, discard the stale result
+  if (r && n1 && n2 && !((r.n1===n1&&r.n2===n2)||(r.n1===n2&&r.n2===n1))) {
+    r = null; // stale — teams changed due to upstream override
+    if (results[region]?.[rn]) delete results[region][rn][idx];
+  }
+  var key = region + '-' + rn + '-' + idx;
+  var isBusy = busyKey === key;
+  var isActive = activeKey === key;
+  var canAn = t1raw && t2raw && t1raw.indexOf('Winner') < 0 && t1raw !== 'TBD' && t2raw !== 'TBD';
+  var d1 = t1raw ? lookupTeam(t1raw) : null;
+  var d2 = t2raw ? lookupTeam(t2raw) : null;
+
+  var cls = 'mc';
+  if (r) cls += ' done';
+  if (isBusy) cls += ' busy';
+  if (isActive) cls += ' active';
+
+  var cardOnclick = '';
+  if (r) cardOnclick = 'showStored(\'' + region + '\',' + rn + ',' + idx + ')';
+  else if (canAn) cardOnclick = 'analyzeGame(\'' + region + '\',' + rn + ',' + idx + ')';
+
+  var vsContent = '';
+  if (r) {
+    vsContent = probBar(r, n1);
+  } else if (isBusy) {
+    vsContent = '<span class="spin-txt">.<span class="da">.</span><span class="da">.</span></span>';
+  } else {
+    var btnDis = canAn ? '' : 'disabled';
+    var btnOnclick = canAn ? 'event.stopPropagation();analyzeGame(\'' + region + '\',' + rn + ',' + idx + ')' : '';
+    var btnLabel = canAn ? '⚡ Analyze' : 'TBD';
+    vsContent = '<button class="abtn" ' + btnDis + ' onclick="' + btnOnclick + '">' + btnLabel + '</button>';
+  }
+
+  var html = '<div class="' + cls + '" onclick="' + cardOnclick + '">';
+  html += slot(t1raw, r && r.winner === n1, d1, r && r.overridden && r.overrideWinner === n1);
+  html += '<div class="vsbar">' + vsContent + '</div>';
+  html += slot(t2raw, r && r.winner === n2, d2, r && r.overridden && r.overrideWinner === n2);
+  html += '</div>';
+  return html;
+}
+
+function slot(raw, isWin, td, isOv) {
+  var seedMatch = raw ? raw.match(/^(\d+)/) : null;
+  var seed = seedMatch ? seedMatch[1] : '';
+  var name = raw ? raw.replace(/^\d+\s*/,'').trim() : 'TBD';
+  var wab = td ? td.wab : null;
+  var wabHtml = '';
+  if (wab != null) {
+    var wc = wab > 0.5 ? 'pos' : wab < -0.5 ? 'neg' : 'neu';
+    wabHtml = '<span class="twab ' + wc + '">' + (wab > 0 ? '+' : '') + wab.toFixed(1) + '</span>';
+  }
+  var cls = 'ts' + (isOv ? ' ov' : isWin ? ' win' : '') + (raw ? '' : ' empty');
+  var tickHtml = isWin ? '<span class="tick' + (isOv ? ' ov' : '') + '">\u2713</span>' : '';
+  return '<div class="' + cls + '"><span class="tseed">' + seed + '</span><span class="tname" title="' + name.replace(/"/g,'&quot;') + '">' + name + '</span>' + wabHtml + tickHtml + '</div>';
+}
+
+function probBar(r, n1) {
+  var rawProb = r.winner === n1 ? r.winProb : 100 - r.winProb;
+  var prob = (isNaN(rawProb) || rawProb == null) ? 50 : Math.round(rawProb);
+  var isOv = r.overridden;
+  // Upset = winner has a higher seed number than loser (regardless of who picked it)
+  var winnerSeed = r.winner === r.n1 ? r.seed1 : r.seed2;
+  var loserSeed  = r.winner === r.n1 ? r.seed2 : r.seed1;
+  var isUpset    = winnerSeed > loserSeed;
+  var cls = isOv ? 'pf-ov' : isUpset ? 'pf-upset' : 'pf-fav';
+  var pill = isOv ? '<span class="ovpill">MY PICK</span>' : (isUpset && !isOv) ? '<span class="upill">UPSET</span>' : '';
+  // Show both MY PICK and UPSET if user picked an upset
+  if (isOv && isUpset) pill = '<span class="ovpill">MY PICK</span><span class="upill" style="margin-left:3px">UPSET</span>';
+  return '<div class="pbar"><div class="pbar-t"><div class="pbar-f ' + cls + '" style="width:' + prob + '%"></div></div><span class="pct">' + prob + '%</span>' + pill + '</div>';
+}
+
+// ══════════════════════════════════════════════
+// ANALYSIS SIDEBAR
+// ══════════════════════════════════════════════
+function showStored(region, rn, idx) {
+  const r = results[region]?.[rn]?.[idx];
+  if (!r) return;
+  activeKey = `${region}-${rn}-${idx}`;
+  renderBracket();
+  showAnalysis(region, rn, idx, r);
+}
+
+function showAnalysis(region, rn, idx, r) {
+  document.getElementById('howto-panel').style.display = 'none';
+  const ap = document.getElementById('analysis-panel');
+  try {
+    ap.innerHTML = buildSidebar(region, rn, idx, r);
+    renderWeightSummary(r);
+  } catch(e) {
+    console.error('showAnalysis error:', e);
+    ap.innerHTML = '<div style="padding:16px;color:var(--red);font-size:11px;line-height:1.6"><strong>⚠ Display error</strong><br>' + e.message + '</div>';
+  }
+}
+
+function renderWeightSummary(r) {
+  var el = document.getElementById('ws-rows');
+  if (!el) return;
+
+  // Update legend labels with actual team names
+  var leg1 = document.getElementById('ws-leg-t1');
+  var leg2 = document.getElementById('ws-leg-t2');
+  if (leg1 && r && r.n1) leg1.querySelector('span:last-child').textContent = '\u25b6 ' + r.n1;
+  if (leg2 && r && r.n2) leg2.querySelector('span:last-child').textContent = '\u25c0 ' + r.n2;
+
+  var LABELS = {adjOE:'Off. Efficiency', adjDE:'Def. Efficiency', barthag:'Power Rating', wab:'WAB / Resume', record:'Win %', tempo:'Tempo/Pace', seed:'Seed History'};
+  var t = r && r.trace;
+  var comps = (t && t.scoreCalc && t.scoreCalc.comps) || [];
+  var METRIC_KEY = {
+    'Offensive Efficiency':'adjOE', 'Defensive Efficiency':'adjDE',
+    'Power Rating (Barthag)':'barthag', 'WAB \u2013 R\u00e9sum\u00e9 Quality':'wab',
+    'Win Percentage':'record', 'Tempo / Pace':'tempo', 'Seed History Prior':'seed'
+  };
+  var weightsUsed = (t && t.weightsUsed) || W;
+  var tracedSum = 0;
+  Object.keys(weightsUsed).forEach(function(k){ tracedSum += weightsUsed[k]; });
+  if (tracedSum < 0.01) weightsUsed = W;
+
+  var seedOnly = t && t.stats && !t.stats.d1ok && !t.stats.d2ok;
+  var modeNote = document.getElementById('ws-mode-note');
+  if (modeNote) modeNote.style.display = seedOnly ? 'block' : 'none';
+
+  var n1 = (r && r.n1) || 'T1';
+  var n2 = (r && r.n2) || 'T2';
+
+  // Column headers: Factor | Wt | <-- bar --> | Edge (signed, with favors label)
+  var html = '<div style="display:grid;grid-template-columns:1fr 30px 70px 1fr;gap:2px 6px;align-items:center;">';
+  html += '<span style="color:var(--t3);font-size:8px">Factor</span>';
+  html += '<span style="color:var(--t3);font-size:8px;text-align:right">Wt</span>';
+  // Centered bar header with team abbreviations on each side
+  var n1short = n1.split(' ')[0].slice(0,6);
+  var n2short = n2.split(' ')[0].slice(0,6);
+  html += '<div style="display:flex;justify-content:space-between;font-size:7px;color:var(--t3)">';
+  html += '<span style="color:var(--grn)">' + n1short + '</span><span style="color:var(--red)">' + n2short + '</span></div>';
+  html += '<span style="color:var(--t3);font-size:8px">Favors</span>';
+
+  Object.keys(LABELS).forEach(function(key) {
+    var label = LABELS[key];
+    var wPct = Math.round((weightsUsed[key]||0)*100);
+    var isLocked = seedOnly && BART_REQUIRED_METRICS.has(key) && wPct === 0;
+    var compEntry = null;
+    for (var ci=0; ci<comps.length; ci++) { if (METRIC_KEY[comps[ci].name] === key) { compEntry = comps[ci]; break; } }
+    var contrib = compEntry ? compEntry.c : null;
+
+    // Build a centered bar: positive contrib fills right (green = favors n1), negative fills left (red = favors n2)
+    var maxBar = 0.10;
+    var labelColor = isLocked ? 'var(--t3)' : 'var(--t2)';
+    var wtColor = isLocked ? 'var(--t3)' : 'var(--ac)';
+
+    // "Favors" column: show team name + magnitude
+    var favorsHtml;
+    if (isLocked) {
+      favorsHtml = '<span style="color:var(--t3);font-size:8px">locked</span>';
+    } else if (contrib == null) {
+      favorsHtml = '<span style="color:var(--t3);font-size:8px">--</span>';
+    } else if (Math.abs(contrib) < 0.001) {
+      favorsHtml = '<span style="color:var(--t2);font-size:8px">even</span>';
+    } else if (contrib > 0) {
+      favorsHtml = '<span style="color:var(--grn);font-size:8px;font-weight:700">' + n1 + ' +' + contrib.toFixed(3) + '</span>';
+    } else {
+      favorsHtml = '<span style="color:var(--red);font-size:8px;font-weight:700">' + n2 + ' ' + contrib.toFixed(3) + '</span>';
+    }
+
+    // Centered bar: left half = n2 advantage (red, grows leftward), right half = n1 advantage (green, grows rightward)
+    var barHtml;
+    if (contrib == null || isLocked) {
+      barHtml = '<div style="height:5px;background:var(--bd);border-radius:2px"></div>';
+    } else {
+      var pct = Math.min(48, Math.abs(contrib)/maxBar*48);
+      if (contrib > 0.001) {
+        // Green bar growing from center rightward
+        barHtml = '<div style="height:5px;background:var(--bd);border-radius:2px;position:relative;overflow:hidden">' +
+          '<div style="position:absolute;left:50%;top:0;height:100%;width:' + pct.toFixed(1) + '%;background:var(--grn);border-radius:0 2px 2px 0"></div>' +
+          '</div>';
+      } else if (contrib < -0.001) {
+        // Red bar growing from center leftward
+        barHtml = '<div style="height:5px;background:var(--bd);border-radius:2px;position:relative;overflow:hidden">' +
+          '<div style="position:absolute;right:50%;top:0;height:100%;width:' + pct.toFixed(1) + '%;background:var(--red);border-radius:2px 0 0 2px"></div>' +
+          '</div>';
+      } else {
+        barHtml = '<div style="height:5px;background:var(--bd);border-radius:2px"></div>';
+      }
+    }
+
+    html += '<span style="font-size:9px;color:' + labelColor + '">' + label + '</span>';
+    html += '<span style="font-size:9px;font-family:monospace;color:' + wtColor + ';text-align:right">' + wPct + '%</span>';
+    html += barHtml;
+    html += favorsHtml;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+function buildSidebar(region, rn, idx, r, ffIdx) {
+  const hasPos = region!==null && rn!==null && idx!==null;
+
+  // If trace is missing, the result is stale. Show a lightweight card
+  // with the pick buttons so user can still override, plus a re-analyze prompt.
+  if (!r.trace || !r.trace.stats) {
+    const modelWinner0 = (r.prob1 >= 50) ? r.n1 : r.n2;
+    const reBtn = hasPos
+      ? `<button class="btn bp" style="margin-top:12px;width:100%" onclick="analyzeGame('${region}',${rn},${idx})">⚡ Re-analyze to see breakdown</button>`
+      : '';
+    const pickBtns = hasPos ? `
+      <div class="pick-section" style="margin-top:12px">
+        <div class="pick-title">✋ Your Pick</div>
+        <div class="pick-btns">
+          <div class="pick-btn ${r.overrideWinner===r.n1?(r.overrideWinner===modelWinner0?'sel-model':'sel-ov'):r.winner===r.n1&&!r.overridden?'sel-model':''}"
+               onclick="pickWinner('${region}',${rn},${idx},'${r.n1.replace(/'/g,"\'")}')">
+               #${r.seed1} ${r.n1}</div>
+          <div class="pick-btn ${r.overrideWinner===r.n2?(r.overrideWinner===modelWinner0?'sel-model':'sel-ov'):r.winner===r.n2&&!r.overridden?'sel-model':''}"
+               onclick="pickWinner('${region}',${rn},${idx},'${r.n2.replace(/'/g,"\'")}')">
+               #${r.seed2} ${r.n2}</div>
+        </div>
+      </div>` : '';
+    return `<div style="padding:14px">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:8px">
+        Result stored but detailed breakdown unavailable.<br>
+        Winner: <strong style="color:var(--ac)">${r.winner}</strong> (${r.winProb || '?'}%)
+      </div>
+      ${reBtn}${pickBtns}
+    </div>`;
+  }
+
+  const t = r.trace;
+  const modelWinner = (r.prob1 >= 50) ? r.n1 : r.n2;
+  const loser = r.winner===r.n1 ? r.n2 : r.n1;
+  const p1 = r.prob1 || 50, p2 = 100-(r.prob1||50);
+  const c1 = p1>=50 ? 'var(--grn)' : 'var(--t2)';
+  const c2 = p2>=50 ? 'var(--grn)' : 'var(--t2)';
+  const wCls1 = (r.winner===r.n1) ? (r.overridden?'wov':'w') : 'l';
+  const wCls2 = (r.winner===r.n2) ? (r.overridden?'wov':'w') : 'l';
+
+  // Build pick buttons — works for both regular bracket (region/rn/idx) and Final Four (ffIdx)
+  const isFF = ffIdx !== undefined && ffIdx !== null;
+  const _esc = s => (s||'').replace(/'/g, "\\'");
+  const pickCall1 = isFF
+    ? `pickFF('${ffIdx}','${_esc(r.n1)}')`
+    : `pickWinner('${region}',${rn},${idx},'${_esc(r.n1)}')`;
+  const pickCall2 = isFF
+    ? `pickFF('${ffIdx}','${_esc(r.n2)}')`
+    : `pickWinner('${region}',${rn},${idx},'${_esc(r.n2)}')`;
+  const resetCall = isFF
+    ? `pickFF('${ffIdx}','${_esc(modelWinner)}')`
+    : `pickWinner('${region}',${rn},${idx},'${_esc(modelWinner)}')`;
+
+  const overrideHTML = (hasPos || isFF) ? `
+    <div class="pick-section">
+      <div class="pick-title">✋ Your Pick</div>
+      <div class="pick-desc">
+        Model picks <strong style="color:var(--ac)">${modelWinner}</strong> (${r.winProb}%).
+        ${r.overridden ? `<span style="color:var(--purple)">You've overridden to <strong>${r.overrideWinner}</strong>.</span>` : 'Disagree? Pick your winner below — injury, coaching edge, gut feel.'}
+      </div>
+      <div class="pick-btns">
+        <div class="pick-btn ${r.overrideWinner===r.n1?(r.overrideWinner===modelWinner?'sel-model':'sel-ov'):r.winner===r.n1&&!r.overridden?'sel-model':''}"
+             onclick="${pickCall1}">#${r.seed1} ${r.n1}</div>
+        <div class="pick-btn ${r.overrideWinner===r.n2?(r.overrideWinner===modelWinner?'sel-model':'sel-ov'):r.winner===r.n2&&!r.overridden?'sel-model':''}"
+             onclick="${pickCall2}">#${r.seed2} ${r.n2}</div>
+      </div>
+      ${r.overridden ? `<button class="clear-ov" onclick="${resetCall}" title="Reset to model pick">↩ Reset to model pick</button>` : ''}
+    </div>` : '';
+
+  return `
+    <div class="verdict">
+      <div class="team-row">
+        <div class="team-box ${wCls1}">
+          <div class="tb-name">${r.n1}</div>
+          <div class="tb-seed">Seed #${r.seed1}${t.stats.d1ok?' ✓':' est'}</div>
+          <div class="tb-prob" style="color:${c1}">${p1}%</div>
+        </div>
+        <div class="vs-div">VS</div>
+        <div class="team-box ${wCls2}">
+          <div class="tb-name">${r.n2}</div>
+          <div class="tb-seed">Seed #${r.seed2}${t.stats.d2ok?' ✓':' est'}</div>
+          <div class="tb-prob" style="color:${c2}">${p2}%</div>
+        </div>
+      </div>
+      <div class="proj-score">Projected: <strong>${r.winner}</strong> ${r.scoreW} – ${loser} ${r.scoreL}</div>
+      <div class="tags">
+        ${r.upsetAlert?'<span class="tag t-upset">⚡ UPSET</span>':''}
+        ${r.usedRealData?'<span class="tag t-real">● Live data</span>':'<span class="tag t-seed">◐ Seed model</span>'}
+        ${r.overridden?'<span class="tag t-ov">✋ My Pick</span>':''}
+      </div>
+    </div>
+    ${overrideHTML}
+    <div class="steps-wrap">
+      <div class="steps-label">Step-by-step breakdown — click any step to expand</div>
+      <div id="weight-summary" style="background:var(--s3);border:1px solid var(--bd);border-radius:7px;padding:9px 12px;margin-bottom:9px;font-size:9px">
+        <div style="color:var(--t3);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Active formula weights</div>
+        <div id="ws-legend" style="display:flex;gap:10px;margin-bottom:7px;font-size:9px;flex-wrap:wrap">
+          <span style="color:var(--t3)">Bar direction:</span>
+          <span id="ws-leg-t1" style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:18px;height:4px;background:var(--grn);border-radius:2px"></span><span style="color:var(--grn)">favors T1</span></span>
+          <span id="ws-leg-t2" style="display:flex;align-items:center;gap:3px"><span style="display:inline-block;width:18px;height:4px;background:var(--red);border-radius:2px"></span><span style="color:var(--red)">favors T2</span></span>
+        </div>
+        <div id="ws-mode-note" style="display:none;font-size:9px;color:var(--red);background:rgba(230,57,70,.07);border:1px solid rgba(230,57,70,.18);border-radius:4px;padding:4px 8px;margin-bottom:6px;line-height:1.5">
+          🔒 BartTorvik not loaded — 5 metrics locked. Seed history + win % only.
+        </div>
+        <div id="ws-rows"></div>
+      </div>
+      ${step(1,'Load Team Stats',`${t.stats.d1ok?'✓':'~'} ${r.n1} / ${t.stats.d2ok?'✓':'~'} ${r.n2}`,buildStatsBody(r,t),'Built-in 2026 T-Rank stats (schedule-adjusted). Green = better for that team. ~ means not in dataset — seed-average substituted.')}
+      ${step(2,'Compute Edges (T1−T2)',t.diffs ? `OE ${t.diffs.dOE>0?'+':''}${(t.diffs.dOE||0).toFixed(2)} | DE ${t.diffs.dDE>0?'+':''}${(t.diffs.dDE||0).toFixed(2)}` : 'Edges computed',buildDiffBody(r,t),`Each stat is converted to ${r.n1}'s advantage over ${r.n2}: positive = ${r.n1} better, negative = ${r.n2} better. All scaled to same magnitude.`)}
+      ${step(3,'Seed History Prior',t.seed ? `${t.seed.sk} → ${(t.seed.upsetP*100).toFixed(1)}% upset rate` : 'Seed prior applied',buildSeedBody(t),'40+ years of NCAA tournament data tell us the historical upset probability for this exact seed matchup. Used as a "prior" before team stats adjust it.')}
+      ${step(4,'Weighted Score',t.scoreCalc ? `${r.n1} ${t.scoreCalc.rawScore>0?'+':''}${(t.scoreCalc.rawScore||0).toFixed(3)}` : 'Score computed',buildScoreBody(r,t),`Each edge is multiplied by its weight (how much we trust that factor) and summed. Positive total = ${r.n1} favored.`)}
+      ${step(5,'Sigmoid → Probability',t.sigStep.formula,buildSigBody(r,t),'The raw score is passed through a sigmoid (S-curve) function, converting any number to a 0–100% probability. Score=0 means 50/50.')}
+      ${step(6,'1,000 Monte Carlo Sims',`${r.n1} wins ${t.mcStep.mcW}/1000`,buildMCBody(r,t),`Basketball has huge game-to-game variance. We run 1,000 simulated games, adding gaussian noise (±${t.mcStep.sigma}pts) to each team's stats to model how they might over/under-perform on the day.`)}
+      ${step(7,'Clamp to Historical Range',t.clampStep ? `${(t.clampStep.minP*100).toFixed(0)}%–${(t.clampStep.maxP*100).toFixed(0)}% ${t.clampStep.wasClamped?'⚠ CLAMPED':'✓ OK'}` : 'Range applied',buildClampBody(r,t),`The blended probability is forced into a historically valid range for this seed matchup. A #1 seed can't model below ~78% — that has never happened.`)}
+      ${step(8,'Project Final Score',`${r.winner} ${r.scoreW} – ${loser} ${r.scoreL}`,buildProjBody(r,t),"Score is estimated using each team's offensive efficiency vs the opponent's defense, multiplied by their combined pace.")}
+    </div>`;
+}
+
+// Step builder
+function step(num, lbl, summary, body, explain) {
+  const id = 'st' + num + '_' + Math.random().toString(36).slice(2,7);
+  // Auto-expand the most informative steps
+  const autoOpen = [1, 4, 5, 6].includes(num);
+  return `<div class="step">
+    <div class="step-hdr" onclick="toggleStep('${id}')">
+      <div class="step-n">${num}</div>
+      <div class="step-lbl">${lbl}</div>
+      <div class="step-sum">${summary}</div>
+      <div class="step-chev ${autoOpen?'open':''}" id="ch_${id}">▾</div>
+    </div>
+    <div class="step-body ${autoOpen?'open':''}" id="${id}">
+      <div class="step-explain">${explain}</div>
+      ${body}
+    </div>
+  </div>`;
+}
+
+function toggleStep(id) {
+  const body = document.getElementById(id);
+  const chev = document.getElementById('ch_'+id);
+  if (!body || !chev) return;
+  const o = body.classList.toggle('open');
+  chev.classList.toggle('open', o);
+}
+
+// Step body builders
+function buildStatsBody(r, t) {
+  const s = t.stats || {};
+  // Safe value helper — returns '—' if undefined/null, otherwise toFixed
+  const fv = (v, dec=1) => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(dec);
+  const rows = [
+    {l:'Adj. Offensive Eff',v1:fv(s.oe1),v2:fv(s.oe2),hb:true,na1:!s.d1ok,na2:!s.d2ok,
+     tip:'Pts per 100 possessions vs avg D1 defense. Higher=better. D1 avg≈104.'},
+    {l:'Adj. Defensive Eff',v1:fv(s.de1),v2:fv(s.de2),hb:false,na1:!s.d1ok,na2:!s.d2ok,
+     tip:'Pts allowed per 100 possessions. LOWER is better.'},
+    {l:'Barthag (Power Rtg)',v1:fv(s.ba1 != null ? s.ba1*100 : null),v2:fv(s.ba2 != null ? s.ba2*100 : null),hb:true,na1:!s.d1ok,na2:!s.d2ok,
+     tip:'Prob×100 of beating avg D1 team. Combines offense+defense in one.'},
+    {l:'Tempo (poss/40min)',v1:fv(s.tp1),v2:fv(s.tp2),hb:null,na1:!s.d1ok,na2:!s.d2ok,
+     tip:'Pace-adjusted possessions per 40 min. Higher=faster.'},
+    {l:'WAB (vs Bubble)',v1:s.wb1!=null?fv(s.wb1):'—',v2:s.wb2!=null?fv(s.wb2):'—',hb:true,na1:s.wb1==null,na2:s.wb2==null,
+     tip:'Wins above bubble level vs same schedule. Accounts for quality of wins/losses, location, margin. Best résumé metric.'},
+    {l:'Record',v1:`${s.wins1||0}-${s.loss1||0}`,v2:`${s.wins2||0}-${s.loss2||0}`,hb:null,na1:!(s.wins1||s.loss1),na2:!(s.wins2||s.loss2),
+     tip:'Current season W-L from ESPN.'},
+  ];
+  const lbl1 = `${r.n1} ${s.d1ok?'<span style="color:var(--grn)">●</span>':'<span style="color:var(--t3)">~est</span>'}`;
+  const lbl2 = `${r.n2} ${s.d2ok?'<span style="color:var(--grn)">●</span>':'<span style="color:var(--t3)">~est</span>'}`;
+  let html = `<div class="sg"><div class="sg-h" style="text-align:right">${lbl1}</div><div class="sg-h" style="text-align:center">Metric</div><div class="sg-h">${lbl2}</div>`;
+  rows.forEach(row => {
+    const n1 = parseFloat(row.v1), n2 = parseFloat(row.v2), ok = !isNaN(n1)&&!isNaN(n2)&&row.hb!==null;
+    const c1 = row.na1?'na':ok?(row.hb?(n1>n2?'good':'bad'):(n1<n2?'good':'bad')):'';
+    const c2 = row.na2?'na':ok?(row.hb?(n2>n1?'good':'bad'):(n2<n1?'good':'bad')):'';
+    html += `<div class="sg-v L ${c1}">${row.na1?'~':''} ${row.v1}</div>
+             <div class="sg-l" title="${row.tip}" style="cursor:help;font-size:9px">${row.l} ℹ</div>
+             <div class="sg-v R ${c2}">${row.na2?'~':''} ${row.v2}</div>
+             <div class="sg-ex">${row.tip}</div>`;
+  });
+  return html + '</div>';
+}
+
+function buildDiffBody(r, t) {
+  const d = t.diffs || {};
+  const fv = (v, dec=1) => (v == null || isNaN(v)) ? '—' : Number(v).toFixed(dec);
+  const rows = [
+    {l:'Offensive Eff',raw:fv(d.dOE!=null?d.dOE*10:null),sc:d.dOE||0,fm:`(OE₁−OE₂)÷10`},
+    {l:'Defensive Eff',raw:fv(d.dDE!=null?d.dDE*10:null),sc:d.dDE||0,fm:`(DE₂−DE₁)÷10 [inverted]`},
+    {l:'Power Rating', raw:fv(d.dBA!=null?d.dBA/5:null,3),sc:d.dBA||0,fm:`(Bart₁−Bart₂)×5`},
+    {l:'WAB',          raw:d.hasWAB?fv(d.dWAB!=null?d.dWAB*6:null):'N/A', sc:d.hasWAB?d.dWAB||0:0, fm:d.hasWAB?`(WAB₁−WAB₂)÷6`:'WAB not loaded'},
+    {l:'Win %',        raw:fv(d.dRec!=null?d.dRec*100:null)+'%', sc:d.dRec||0, fm:`WP₁−WP₂`},
+    {l:'Tempo',        raw:fv(d.dTp!=null?d.dTp*12:null), sc:d.dTp||0, fm:`(T₁−T₂)÷12`},
+  ];
+  let html = `<div style="display:grid;grid-template-columns:1fr 55px 60px 55px;gap:3px;font-size:9px;color:var(--t3);padding-bottom:3px;border-bottom:1px solid var(--bd);margin-bottom:4px">
+    <span>Metric</span><span style="text-align:center">Raw Δ</span><span style="text-align:center">Scaled</span><span style="text-align:right">Edge</span></div>`;
+  rows.forEach(row => {
+    const v = row.sc;
+    const clr = v>0.005?'var(--grn)':v<-0.005?'var(--red)':'var(--t2)';
+    const arrow = v>0.005?'▲ '+r.n1 : v<-0.005?'▼ '+r.n2 : '≈ Even';
+    html += `<div style="display:grid;grid-template-columns:1fr 55px 60px 55px;gap:3px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.03)">
+      <span style="font-size:9px;color:var(--t2)">${row.l}</span>
+      <span style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--t2);text-align:center">${row.raw}</span>
+      <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:${clr};text-align:center;font-weight:700">${v>=0?'+':''}${v.toFixed(3)}</span>
+      <span style="font-size:9px;color:${clr};text-align:right;font-weight:700">${arrow}</span>
+    </div>
+    <div style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;padding:1px 0 4px;font-style:italic">${row.fm}</div>`;
+  });
+  return html;
+}
+
+function buildSeedBody(t) {
+  const s = t.seed || {};
+  const fav = s.isFav1?s.n1:s.n2;
+  return `<div class="seed-box">
+    <div class="sr"><span class="sr-k">Matchup type</span><span style="font-weight:700;font-family:'JetBrains Mono',monospace">#${s.seed1} vs #${s.seed2} (${s.sk})</span></div>
+    <div class="sr"><span class="sr-k">Historical upset %</span><span style="color:var(--red);font-family:'JetBrains Mono',monospace;font-weight:700">${s.upsetP != null ? (s.upsetP*100).toFixed(1) : '—'}%</span></div>
+    <div class="sr"><span class="sr-k">${fav} wins historically</span><span style="color:var(--grn);font-family:'JetBrains Mono',monospace;font-weight:700">${s.favP != null ? (s.favP*100).toFixed(1) : '—'}%</span></div>
+    <div class="sr"><span class="sr-k">Seed factor (scaled)</span><span style="font-family:'JetBrains Mono',monospace;color:var(--ac)">${s.dSeed != null ? (s.dSeed>0?'+':'')+(s.dSeed).toFixed(3) : '—'}</span></div>
+    <div style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;margin-top:5px;font-style:italic">${s.favP != null && s.dSeed != null ? '('+( s.favP*100).toFixed(1)+'% − 50%) × 2 = '+(s.dSeed).toFixed(3) : ''}</div>
+  </div>`;
+}
+
+function buildScoreBody(r, t) {
+  const sc = t.scoreCalc || {};
+  if (!sc.comps || !sc.comps.length) return '<div style="padding:8px;color:var(--t2);font-size:11px">Score breakdown unavailable — re-analyze to see details.</div>';
+  const maxC = Math.max(...sc.comps.map(c=>Math.abs(c.c||0)), 0.001);
+  let html = '';
+  sc.comps.forEach(c => {
+    const pct = Math.abs(c.c)/maxC*100;
+    const clr = c.c>0.001?'var(--grn)':c.c<-0.001?'var(--red)':'var(--t3)';
+    const sign = c.c>=0?'+':'';
+    html += `<div class="wr">
+      <span class="wr-l">${c.name}</span>
+      <div class="wr-bw"><div class="wr-b" style="width:${pct}%;background:${c.c>0?'var(--grn)':'var(--red)'}"></div></div>
+      <span class="wr-n" style="color:${clr}">${sign}${(c.c||0).toFixed(4)}</span>
+    </div>
+    <div style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;padding:0 0 3px;font-style:italic">${(c.val||0).toFixed(3)} × ${((c.w||0)*100).toFixed(0)}% weight = ${sign}${(c.c||0).toFixed(4)}</div>`;
+  });
+  const tc = sc.rawScore;
+  const who = tc>0.01?r.n1:tc<-0.01?r.n2:'Toss-up';
+  const tclr = tc>0?'var(--grn)':tc<0?'var(--red)':'var(--t2)';
+  html += `<div class="score-tot">
+    <span style="font-size:10px;color:var(--t2)">Total → <strong style="color:${tclr}">${who}</strong> favored</span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${tclr};font-weight:700">${tc>0?'+':''}${tc.toFixed(4)}</span>
+  </div>`;
+  return html;
+}
+
+function buildSigBody(r, t) {
+  const sig = t.sigStep;
+  const pct = (sig.logitP*100).toFixed(1);
+  const bw = Math.round(sig.logitP*100);
+  return `<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t2);margin-bottom:8px">${sig.formula}</div>
+  <div class="prob-big"><div class="prob-inner" style="width:${bw}%;background:linear-gradient(90deg,${bw>=50?'var(--grn)':'var(--red)'},var(--ac))"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--t3);margin-top:2px">
+    <span>0% (${r.n1} loses)</span>
+    <span style="font-family:'JetBrains Mono',monospace;color:var(--ac);font-weight:700">${pct}%</span>
+    <span>100% (${r.n1} wins)</span>
+  </div>`;
+}
+
+function buildMCBody(r, t) {
+  const m = t.mcStep;
+  // Seed-only mode: Bernoulli approach (sigma=0.08 on favP, not on stat diffs)
+  if (!t.stats.d1ok && !t.stats.d2ok) {
+    return `<div class="mc-g">
+      <div class="mc-b"><div class="mc-n" style="color:var(--grn)">${m.mcW}</div><div class="mc-l">${r.n1} wins</div></div>
+      <div class="mc-b"><div class="mc-n" style="color:var(--red)">${m.SIMS - m.mcW}</div><div class="mc-l">${r.n2} wins</div></div>
+      <div class="mc-b"><div class="mc-n" style="color:var(--ac)">${(m.simP*100).toFixed(1)}%</div><div class="mc-l">Sim win %</div></div>
+    </div>
+    <div style="font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;line-height:1.9">
+      Mode: <span style="color:var(--ac)">Bernoulli (seed-only)</span><br>
+      Each sim: pGame = ${(t.seed.favP*100).toFixed(1)}% + N(0, 8%) + record nudge<br>
+      Then: flip weighted coin → team1 wins if rand &lt; pGame<br>
+      Model: ${(m.logitP*100).toFixed(1)}% × 60% + Sims ${(m.simP*100).toFixed(1)}% × 40% = <strong style="color:var(--ac)">${(m.blended*100).toFixed(1)}%</strong>
+    </div>`;
+  }
+  return `<div class="mc-g">
+    <div class="mc-b"><div class="mc-n" style="color:var(--grn)">${m.mcW}</div><div class="mc-l">${r.n1} wins</div></div>
+    <div class="mc-b"><div class="mc-n" style="color:var(--red)">${m.SIMS-m.mcW}</div><div class="mc-l">${r.n2} wins</div></div>
+    <div class="mc-b"><div class="mc-n" style="color:var(--ac)">${(m.simP*100).toFixed(1)}%</div><div class="mc-l">Sim win %</div></div>
+  </div>
+  <div style="font-size:9px;color:var(--t3);font-family:'JetBrains Mono',monospace;line-height:1.9">
+    Noise per stat: ±${m.sigma}pts (gaussian)<br>
+    Model: ${(m.logitP*100).toFixed(1)}% × 60% = ${(m.logitP*.6*100).toFixed(1)}%<br>
+    Sims:  ${(m.simP*100).toFixed(1)}% × 40% = ${(m.simP*.4*100).toFixed(1)}%<br>
+    <strong style="color:var(--ac)">Blended: ${(m.blended*100).toFixed(1)}%</strong>
+    &nbsp;→&nbsp; <span style="color:var(--t2)">${m.formula}</span>
+  </div>`;
+}
+
+function buildClampBody(r, t) {
+  const cl = t.clampStep || {};
+  const minPct=Math.round(cl.minP*100), maxPct=Math.round(cl.maxP*100);
+  const bPct=cl.blended!=null?(cl.blended*100).toFixed(1):'—', fPct=cl.clamped!=null?(cl.clamped*100).toFixed(1):'—';
+  const dotPos=Math.round(cl.clamped*100);
+  const preDotPos=Math.round(cl.blended*100);
+  return `<div class="clamp-box">
+    <div class="sr"><span class="sr-k">Seed ${cl.sk} allowed range</span><span style="font-family:'JetBrains Mono',monospace;color:var(--blue)">${minPct}% – ${maxPct}%</span></div>
+    <div class="sr"><span class="sr-k">Before clamp</span><span style="font-family:'JetBrains Mono',monospace;color:var(--t2)">${bPct}%</span></div>
+    <div class="sr"><span class="sr-k">After clamp (final)</span><span style="font-family:'JetBrains Mono',monospace;color:var(--ac);font-weight:700">${fPct}%</span></div>
+    <div class="clamp-range">
+      <div class="clamp-allowed" style="left:${minPct}%;width:${maxPct-minPct}%"></div>
+      <div class="clamp-dot" style="left:calc(${dotPos}% - 4px);background:var(--ac);border:2px solid var(--bg)"></div>
+      ${cl.wasClamped?`<div class="clamp-dot" style="left:calc(${preDotPos}% - 4px);background:var(--red);opacity:.5;border:2px solid var(--bg)"></div>`:''}
+    </div>
+    ${cl.wasClamped
+      ?`<div style="font-size:9px;color:var(--red)">⚠ Adjusted: ${bPct}% → ${fPct}% (outside historical bounds)</div>`
+      :`<div style="font-size:9px;color:var(--grn)">✓ Within historical bounds for ${cl.sk} matchup</div>`}
+  </div>`;
+}
+
+function buildProjBody(r, t) {
+  const p = t.projStep || {};
+  const loser = r.winner===r.n1 ? r.n2 : r.n1;
+  return `<div class="seed-box">
+    <div class="sr"><span class="sr-k">Avg combined tempo</span><span style="font-family:'JetBrains Mono',monospace">${p.pace != null ? p.pace.toFixed(1) : '—'} poss/40min</span></div>
+    <div style="height:5px"></div>
+    <div class="sr"><span class="sr-k" style="color:var(--t1)">${r.n1} — offense vs defense</span><span style="font-family:'JetBrains Mono',monospace;color:${r.winner===r.n1?'var(--grn)':'var(--t2)'};font-size:14px;font-weight:700">${p.pts1}</span></div>
+    <div style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;padding:2px 0 5px;font-style:italic">${p.oe1 != null ? '((' + p.oe1.toFixed(1) + ' + ' + p.de2.toFixed(1) + ') ÷ 2 ÷ 100) × ' + (p.pace||0).toFixed(1) + ' = ' + p.pts1 : ''}</div>
+    <div class="sr"><span class="sr-k">${r.n2} — offense vs defense</span><span style="font-family:'JetBrains Mono',monospace;color:${r.winner===r.n2?'var(--grn)':'var(--t2)'};font-size:14px;font-weight:700">${p.pts2}</span></div>
+    <div style="font-size:8px;color:var(--t3);font-family:'JetBrains Mono',monospace;padding:2px 0 2px;font-style:italic">${p.oe2 != null ? '((' + p.oe2.toFixed(1) + ' + ' + p.de1.toFixed(1) + ') ÷ 2 ÷ 100) × ' + (p.pace||0).toFixed(1) + ' = ' + p.pts2 : ''}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// FINAL FOUR
+// ══════════════════════════════════════════════
+function getFFGame(idx) {
+  // Return seeded names (e.g. "1 Duke") so buildPrediction has correct seed numbers.
+  // Uses findRaw() to look up the seed from the R64 bracket, falling back to
+  // seed stored in the Elite 8 result if available.
+  const rW = reg => {
+    const res = results[reg]?.[3]?.[0];
+    if (!res) return `${reg} Winner`;
+    const name = res.winner;
+    // Try to find the seeded version of the name
+    const raw = findRaw(name, reg);
+    if (raw) return raw;
+    // Fallback: reconstruct from stored seed in the result
+    const seed = (res.winner === res.n1) ? res.seed1 : res.seed2;
+    return (seed && seed !== 8) ? `${seed} ${name}` : name;
+  };
+  if (idx===0) return [rW('East'), rW('West')];
+  if (idx===1) return [rW('South'), rW('Midwest')];
+  return null;
+}
+
+function updateFFTab() {
+  [0,1].forEach(function(i) {
+    var el = document.getElementById('ff' + i);
+    if (!el) return;
+    var game = getFFGame(i);
+    var r = ffRes[i];
+    var n1 = game[0].replace(/^\d+\s*/,'').trim();
+    var n2 = game[1].replace(/^\d+\s*/,'').trim();
+    var canAn = game[0].indexOf('Winner') < 0 && game[1].indexOf('Winner') < 0;
+
+    var cardClick = r ? ('showStoredFF(' + i + ')') : (canAn ? ('analyzeFF(' + i + ')') : '');
+    var vs = r
+      ? probBar(r, n1)
+      : '<button class="abtn" ' + (canAn?'':'disabled') + ' onclick="event.stopPropagation();analyzeFF(' + i + ')">' + (canAn?'⚡ Analyze':'Awaiting seeds') + '</button>';
+
+    var cls = 'mc' + (r?' done':'');
+    var html = '<div class="' + cls + '" style="cursor:' + (cardClick?'pointer':'default') + '" onclick="' + cardClick + '">';
+    html += slot(game[0], r && r.winner===n1, lookupTeam(game[0]), r && r.overridden && r.overrideWinner===n1);
+    html += '<div class="vsbar">' + vs + '</div>';
+    html += slot(game[1], r && r.winner===n2, lookupTeam(game[1]), r && r.overridden && r.overrideWinner===n2);
+    html += '</div>';
+    el.innerHTML = html;
+  });
+
+  const chBox = document.getElementById('champ-box');
+  if (!chBox) return;
+  const ch = ffRes.champ;
+  if (ch) {
+    const loser = ch.winner===ch.n1?ch.n2:ch.n1;
+    const isOv = ch.overridden;
+    chBox.style.cursor = 'pointer';
+    chBox.onclick = function() { showStoredFF('champ'); };
+    chBox.innerHTML = `
+      <div class="clbl">National Champion${isOv ? ' <span style="color:var(--purple);font-size:9px">MY PICK</span>' : ''}</div>
+      <div class="cname" style="color:${isOv?'var(--purple)':'var(--ac)'}">${ch.winner}</div>
+      <div class="cscore">${ch.scoreW}–${ch.scoreL}</div>
+      <div class="cprob">${ch.winProb}% probability</div>
+      <div style="font-size:10px;color:var(--t2);margin-top:4px">over ${loser}</div>
+      <div style="font-size:9px;color:var(--t2);margin-top:8px;opacity:.7">Click to see breakdown & change pick</div>`;
+  } else {
+    const sf1=ffRes[0]?.winner, sf2=ffRes[1]?.winner;
+    chBox.onclick = null; chBox.style.cursor = 'default';
+    if (sf1&&sf2) {
+      const t1r=findRaw(sf1)||sf1, t2r=findRaw(sf2)||sf2;
+      chBox.innerHTML=`<div class="clbl">Championship</div>
+        ${slot(t1r,false,lookupTeam(t1r),false)}
+        <div class="vsbar"><button class="abtn" onclick="analyzeChamp()">⚡ Analyze</button></div>
+        ${slot(t2r,false,lookupTeam(t2r),false)}`;
+    } else {
+      chBox.innerHTML = '<div class="clbl">National Champion</div><div id="champ-inner" style="color:var(--t3);font-size:11px;margin-top:6px">Analyze semifinals first</div>';
+    }
+  }
+}
+
+// ══════════════════════════════════════════════
+// UPSETS
+// ══════════════════════════════════════════════
+function isUpsetResult(res) {
+  // The ONE definition: winner has a higher seed number than loser.
+  // Applies to both model predictions and user overrides.
+  if (!res || !res.winner) return false;
+  var winnerSeed = res.winner === res.n1 ? res.seed1 : res.seed2;
+  var loserSeed  = res.winner === res.n1 ? res.seed2 : res.seed1;
+  return winnerSeed > loserSeed;
+}
+
+function renderUpsets() {
+  const el = document.getElementById('upsets-el');
+  const ups = [];
+  const ROUND_LABELS = ['R64','R32','Sweet 16','Elite 8'];
+  REGIONS.forEach(reg => {
+    [0,1,2,3].forEach(rn => {
+      Object.entries(results[reg]?.[rn]||{}).forEach(([idx,res]) => {
+        if (!isUpsetResult(res)) return;
+        const winnerSeed = res.winner===res.n1 ? res.seed1 : res.seed2;
+        const loserSeed  = res.winner===res.n1 ? res.seed2 : res.seed1;
+        const loser = res.winner===res.n1 ? res.n2 : res.n1;
+        ups.push({region:reg, rn, res, loser, winnerSeed, loserSeed,
+                  round: ROUND_LABELS[rn],
+                  isMyPick: !!res.overridden});
+      });
+    });
+  });
+  [0,1,'champ'].forEach(k => {
+    const res = ffRes[k];
+    if (!isUpsetResult(res)) return;
+    const winnerSeed = res.winner===res.n1 ? res.seed1 : res.seed2;
+    const loserSeed  = res.winner===res.n1 ? res.seed2 : res.seed1;
+    const loser = res.winner===res.n1 ? res.n2 : res.n1;
+    ups.push({region:'Final Four', res, loser, winnerSeed, loserSeed,
+              round: k==='champ' ? 'Championship' : 'Semifinal',
+              isMyPick: !!res.overridden});
+  });
+
+  // Sort: biggest upsets first (largest seed differential)
+  ups.sort((a,b) => (b.winnerSeed - b.loserSeed) - (a.winnerSeed - a.loserSeed));
+
+  if (!ups.length) {
+    el.innerHTML = '<div style="color:var(--t2);font-size:12px;padding:20px;text-align:center">No upsets yet — analyze some games first.</div>';
+    return;
+  }
+  el.innerHTML = ups.map(u => {
+    const diff = u.winnerSeed - u.loserSeed;
+    const myPickBadge = u.isMyPick ? '<span style="font-size:9px;background:var(--purple);color:#fff;padding:1px 6px;border-radius:8px;margin-left:6px;font-weight:700">MY PICK</span>' : '';
+    const dataLabel = u.res.usedRealData
+      ? '<span style="color:var(--grn)">live data</span>'
+      : '<span style="color:var(--t3)">seed estimate</span>';
+    const conf = isNaN(u.res.winProb) ? '—' : u.res.winProb + '%';
+    return `<div class="ucard">
+      <div class="um">#${u.winnerSeed} ${u.res.winner} over #${u.loserSeed} ${u.loser}${myPickBadge}</div>
+      <div class="ud">${u.region} · ${u.round} · ${conf} confidence · Δseed +${diff} · ${dataLabel}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// PROGRESS & COUNTS
+// ══════════════════════════════════════════════
+function renderProgress() {
+  const rows = REGIONS.map(r => {
+    const d=Object.keys(results[r]?.[0]||{}).length;
+    const c=d===8?'var(--grn)':d>0?'var(--ac)':'var(--t1)';
+    return `<div class="progress-row"><span style="color:var(--t2);font-size:10px">${r}</span><span style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:10px;color:${c}">${d}/8</span></div>`;
+  });
+  const tot = REGIONS.reduce((a,r)=>a+Object.keys(results[r]?.[0]||{}).length,0);
+  rows.push(`<div class="progress-row"><span style="font-size:10px;font-weight:700;color:var(--t1)">Total R64</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;color:var(--ac)">${tot}/32</span></div>`);
+  document.getElementById('prog-rows').innerHTML = rows.join('');
+}
+
+function updateCount() {
+  const tot=REGIONS.reduce((a,r)=>a+Object.keys(results[r]?.[0]||{}).length,0);
+  document.getElementById('ac-lbl').textContent = `${tot}/32 R64`;
+}
+
+// ══════════════════════════════════════════════
+// STATE HELPERS
+// ══════════════════════════════════════════════
+function getGame(region, rn, idx) {
+  if (rn===0) return bracket[region]?.[idx];
+  // gw: get winner with seed prefix preserved for correct buildPrediction calculations
+  const gw=(r,i)=>{
+    const res=results[region]?.[r]?.[i];
+    if(!res) return '';
+    const name=res.winner;
+    // re-attach seed: find in bracket (R64) or carry from result's seed info
+    const raw=findRaw(name,region);
+    if(raw) return raw;
+    // fallback: reconstruct "seed name" using stored seed data
+    const seed = (res.winner===res.n1)?res.seed1:res.seed2;
+    return seed ? seed+' '+name : name;
+  };
+  if (rn===1) { const b=idx*2; return[gw(0,b),gw(0,b+1)]; }
+  if (rn===2) { const b=idx*2; return[gw(1,b),gw(1,b+1)]; }
+  if (rn===3) return[gw(2,0),gw(2,1)];
+  return null;
+}
+function setRes(region, rn, idx, r) {
+  if(!results[region]) results[region]={};
+  if(!results[region][rn]) results[region][rn]={};
+  results[region][rn][idx]=r;
+}
+function findRaw(cleanName, hintRegion) {
+  // First search the R64 bracket for original seeded name
+  let f=null;
+  REGIONS.forEach(r=>bracket[r].forEach(([t1,t2])=>{
+    if(t1.replace(/^\d+\s*/,'').trim()===cleanName) f=t1;
+    if(t2.replace(/^\d+\s*/,'').trim()===cleanName) f=t2;
+  }));
+  if(f) return f;
+  // If not found in R64 (shouldn't happen), try reconstructing from results
+  const regions = hintRegion ? [hintRegion, ...REGIONS.filter(r=>r!==hintRegion)] : REGIONS;
+  for(const reg of regions){
+    for(const rn of [0,1,2,3]){
+      const rnRes = results[reg]?.[rn];
+      if(!rnRes) continue;
+      for(const idx of Object.keys(rnRes)){
+        const r = rnRes[idx];
+        if(r.n1===cleanName) return r.seed1+' '+r.n1;
+        if(r.n2===cleanName) return r.seed2+' '+r.n2;
+      }
+    }
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════
+// TABS & UI
+// ══════════════════════════════════════════════
+function showTab(id) {
+  currentTab = id;
+  ['bracket','finalfour','upsets','model','formula','import'].forEach(t => {
+    const el = document.getElementById('tab-'+t);
+    if (el) el.style.display = t===id ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('on', ['bracket','finalfour','upsets','model','formula','import'][i]===id);
+  });
+
+  // Swap sidebar: formula tab gets its own right pane with sliders
+  const fsp = document.getElementById('formula-side-panel');
+  const hp  = document.getElementById('howto-panel');
+  const ap  = document.getElementById('analysis-panel');
+  const pp  = document.getElementById('prog-panel');
+  if (id === 'formula') {
+    if (fsp) fsp.style.display = 'flex';
+    if (hp) hp.style.display = 'none';
+    if (ap) ap.style.display = 'none';
+    if (pp) pp.style.display = 'none';
+    // Show banner if BartTorvik not loaded
+    const banner = document.getElementById('formula-data-banner');
+    if (banner) banner.style.display = bartConfig.loaded ? 'none' : 'block';
+    renderFormulaSliders();
+  } else {
+    if (fsp) fsp.style.display = 'none';
+    if (ap) ap.style.display = '';
+    if (pp) pp.style.display = '';
+    // Only show howto if there is no active analysis already showing
+    if (hp) hp.style.display = activeKey ? 'none' : '';
+  }
+
+  if (id==='finalfour') updateFFTab();
+  if (id==='upsets') renderUpsets();
+  if (id==='import') document.getElementById('import-ta').value = JSON.stringify(bracket,null,2);
+}
+
+const WEIGHT_META = [
+  {
+    key: 'adjOE',
+    label: 'Adjusted Offensive Efficiency',
+    sub: 'Points scored per 100 possessions, adjusted for opponent defense strength. The single best predictor of scoring ability — teams that can generate efficient offense consistently win close games.',
+    example: `High: Duke 120.3 pts/100  vs  Low: App State 100.1 pts/100
+Edge = +20.2 → strongly favors Duke
+Typical elite-team range: 115–125 | Average: 108`
+  },
+  {
+    key: 'adjDE',
+    label: 'Adjusted Defensive Efficiency',
+    sub: 'Points allowed per 100 possessions, adjusted for opponent offense. Lower is better. Elite defenses win tournament games by limiting opponent efficiency, especially when opponents are cold from 3.',
+    example: `Low (good): Virginia 88 pts/100 allowed  vs  High (bad): UNLV 108 pts/100
+Edge = +20 for Virginia → stifling D wins close games
+Elite range: 88–95 | Average: 103`
+  },
+  {
+    key: 'barthag',
+    label: 'Barthag Power Rating',
+    sub: 'The probability (0 to 1) that a team would beat an average D1 team. A holistic measure combining offense and defense into one number. Very predictive for identifying "paper tigers" with inflated records.',
+    example: `Elite: Houston 0.975 (beats avg D1 team 97.5% of time)
+Mid: Utah St 0.720
+Bubble: 0.600–0.650 range
+Difference of 0.10 = large meaningful edge`
+  },
+  {
+    key: 'wab',
+    label: 'WAB — Wins Above Bubble',
+    sub: 'How many more wins a team has than a bubble team would have playing the exact same schedule. Rewards beating tough opponents and penalizes padding records with easy wins. Only available when BartTorvik data is loaded.',
+    example: `+5.2 WAB: Won games they "shouldn't" (great résumé)
+ 0.0 WAB: Exactly what a bubble team would do
+-2.1 WAB: Lost games a bubble team would have won
+Set to 0 if BartTorvik data unavailable — weight redistributed to Seed History`
+  },
+  {
+    key: 'seed',
+    label: 'Seed History Prior',
+    sub: 'Based on 40+ years of NCAA tournament results: how often has each seed matchup ended in an upset? This anchors predictions to tournament reality rather than pure efficiency. Critical for lower seeds where anything can happen.',
+    example: `1 vs 16: #1 wins 98.7% historically → strong prior for favorite
+5 vs 12: #12 wins 35.2% → model must respect real upset risk
+8 vs 9: #9 wins 48.7% → near coin flip, stats matter more
+Increase this weight if you trust history over analytics`
+  },
+  {
+    key: 'record',
+    label: 'Win Percentage',
+    sub: "A team's season win-loss record expressed as a percentage. Less predictive than efficiency stats (a 25-5 team that beat weak opponents may be overrated vs a 20-10 team in a tough conference) but adds real-world context.",
+    example: `Team A: 28-3 (90.3%) vs Team B: 21-10 (67.7%)
+Edge = +22.6% → slight bonus for Team A
+Keep this weight low unless you believe records reflect true quality
+High-major conference teams often have lower records than mid-majors`
+  },
+  {
+    key: 'tempo',
+    label: 'Adjusted Tempo',
+    sub: 'Possessions per 40 minutes, adjusted for opponent pace. Matters most when there is a large pace mismatch: a very slow team vs a very fast team creates variance that can favor the underdog. Also affects projected final scores.',
+    example: `Fast: Gonzaga 73 poss/40min vs Slow: Virginia 58 poss/40min
+Mismatch = 15 possessions → high variance game
+A slow team can neutralize a better offense by limiting possessions
+Set low (2–5%) unless you believe pace mismatch is decisive`
+  }
+];
+const DEFAULT_WEIGHTS = {adjOE:0.26,adjDE:0.22,barthag:0.18,wab:0.12,record:0.03,tempo:0.03,seed:0.16};
+
+function renderFormulaSliders() {
+  const bartLoaded = bartConfig.loaded;
+
+  // Left pane: stat descriptions with example data
+  const descEl = document.getElementById('formula-desc-list');
+  if (descEl) {
+    descEl.innerHTML = WEIGHT_META.map(m => {
+      const pct = Math.round(W[m.key]*100);
+      const needsBart = BART_REQUIRED_METRICS.has(m.key);
+      const disabled = needsBart && !bartLoaded;
+      const opacity = disabled ? 'opacity:.42;' : '';
+      const unavailBadge = disabled
+        ? '<span style="font-size:9px;background:rgba(230,57,70,.12);color:var(--red);border:1px solid rgba(230,57,70,.25);border-radius:4px;padding:1px 7px;margin-left:8px;font-weight:600">Needs BartTorvik data</span>'
+        : '';
+      return '<div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--bd);' + opacity + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px">' +
+          '<span style="font-size:13px;font-weight:700;color:' + (disabled?'var(--t3)':'var(--t1)') + ';letter-spacing:.2px">' + m.label + unavailBadge + '</span>' +
+          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:14px;font-weight:700;color:' + (disabled?'var(--t3)':'var(--ac)') + ';background:rgba(245,166,35,.1);padding:2px 8px;border-radius:4px" id="dpct-' + m.key + '">' + (disabled ? '0%' : pct + '%') + '</span>' +
+        '</div>' +
+        '<div style="font-size:11.5px;color:' + (disabled?'var(--t3)':'var(--t1)') + ';line-height:1.75;margin-bottom:10px;opacity:.9">' + m.sub + '</div>' +
+        (disabled
+          ? '<div style="font-size:10px;color:var(--red);background:rgba(230,57,70,.06);border:1px solid rgba(230,57,70,.15);border-radius:5px;padding:8px 10px;line-height:1.7">⚠ This metric requires BartTorvik data. Click <strong>Fetch Live Data</strong> in the status bar to enable it.</div>'
+          : '<div style="font-size:9.5px;color:var(--t1);font-family:\'JetBrains Mono\',monospace;background:var(--s3);border:1px solid var(--bd2);padding:8px 10px;border-radius:5px;line-height:1.8;white-space:pre;opacity:.88">' + m.example + '</div>') +
+      '</div>';
+    }).join('');
+  }
+
+  // Right pane: compact sliders only
+  const sideEl = document.getElementById('formula-sliders-side');
+  if (sideEl) {
+    sideEl.innerHTML = WEIGHT_META.map(m => {
+      const needsBart = BART_REQUIRED_METRICS.has(m.key);
+      const disabled  = needsBart && !bartLoaded;
+      const pct = disabled ? 0 : Math.round(W[m.key]*100);
+      const greyStyle = disabled ? 'opacity:.38;pointer-events:none;' : '';
+      const lockIcon  = disabled ? ' 🔒' : '';
+      return '<div style="margin-bottom:14px;' + greyStyle + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+          '<span style="font-size:11px;font-weight:600;color:' + (disabled?'var(--t3)':'var(--t1)') + '">' + m.label + lockIcon + '</span>' +
+          '<span style="font-family:\'JetBrains Mono\',monospace;font-size:14px;font-weight:700;color:' + (disabled?'var(--t3)':'var(--ac)') + '" id="spct-' + m.key + '">' + pct + '%</span>' +
+        '</div>' +
+        '<input type="range" class="wt-slider" min="0" max="60" step="1" value="' + pct + '" ' +
+          (disabled ? 'disabled style="opacity:.25;cursor:not-allowed" ' : '') +
+          'oninput="updateWeight(\'' + m.key + '\',this.value)" id="sld-' + m.key + '">' +
+        (disabled ? '<div style="font-size:9px;color:var(--red);margin-top:3px">Fetch BartTorvik data to unlock</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+  updateWtTotal();
+}
+
+function updateWeight(key, val) {
+  W[key] = parseInt(val)/100;
+  // Update % in sidebar slider pane
+  const pctEl = document.getElementById('spct-' + key);
+  if (pctEl) pctEl.textContent = val + '%';
+  // Update % in left description pane
+  const dpctEl = document.getElementById('dpct-' + key);
+  if (dpctEl) dpctEl.textContent = val + '%';
+  // Keep slider in sync if triggered from elsewhere
+  const sldEl = document.getElementById('sld-' + key);
+  if (sldEl) sldEl.value = val;
+  updateWtTotal();
+}
+
+function updateWtTotal() {
+  // Total shown is always the sum of ACTIVE (unlocked) weights only.
+  // Locked weights are 0 and excluded — user shouldn't see them in total.
+  const activeKeys = Object.keys(W).filter(k =>
+    bartConfig.loaded || !BART_REQUIRED_METRICS.has(k)
+  );
+  const total = Math.round(activeKeys.reduce((a, k) => a + W[k], 0) * 100);
+  const el = document.getElementById('wt-total');
+  if (!el) return;
+  el.textContent = total + '%';
+  el.style.color = Math.abs(total - 100) < 2 ? 'var(--grn)' : 'var(--red)';
+}
+
+function normalizeWeights() {
+  // Only normalize weights that are currently active (unlocked).
+  // Locked weights stay at 0 and are not included in the sum.
+  const activeKeys = Object.keys(W).filter(k =>
+    bartConfig.loaded || !BART_REQUIRED_METRICS.has(k)
+  );
+  const sum = activeKeys.reduce((a, k) => a + W[k], 0);
+  if (sum === 0) return;
+  // Scale only active keys to sum to 1.0, leave locked keys at 0.
+  activeKeys.forEach(k => W[k] = Math.round(W[k] / sum * 100) / 100);
+  // Fix floating point so total is exactly 1.00 for active keys
+  const newSum = activeKeys.reduce((a, k) => a + W[k], 0);
+  const diff = Math.round((1.0 - newSum) * 100);
+  if (diff !== 0 && activeKeys.length > 0) {
+    // Add the rounding residual to the largest active weight
+    const largest = activeKeys.reduce((a, k) => W[k] > W[a] ? k : a);
+    W[largest] = Math.round((W[largest] + diff/100) * 100) / 100;
+  }
+  renderFormulaSliders();
+}
+
+function resetWeights() {
+  Object.assign(W, DEFAULT_WEIGHTS);
+  // If Bart not loaded, zero out locked metrics immediately
+  if (!bartConfig.loaded) {
+    BART_REQUIRED_METRICS.forEach(k => { W[k] = 0; });
+    // Re-normalize active weights to sum to 1
+    const activeKeys = Object.keys(W).filter(k => !BART_REQUIRED_METRICS.has(k));
+    const sum = activeKeys.reduce((a, k) => a + W[k], 0);
+    if (sum > 0) activeKeys.forEach(k => W[k] = Math.round(W[k] / sum * 100) / 100);
+  }
+  renderFormulaSliders();
+}
+
+function loadSample() {
+  bracket=JSON.parse(JSON.stringify(SAMPLE_BRACKET));
+  results={}; ffRes={}; activeKey=null;
+  renderBracket(); renderProgress(); renderUpsets();
+  document.getElementById('howto-panel').style.display='';
+  document.getElementById('analysis-panel').innerHTML='<div class="ap-placeholder">Click Analyze on any game to see the full prediction breakdown here.</div>';
+}
+
+function clearAll() {
+  bracket={East:Array(8).fill(null).map(()=>['','']),West:Array(8).fill(null).map(()=>['','']),South:Array(8).fill(null).map(()=>['','']),Midwest:Array(8).fill(null).map(()=>['',''])};
+  results={}; ffRes={}; activeKey=null;
+  renderBracket(); renderProgress(); renderUpsets();
+}
+
+function doImport() {
+  try {
+    bracket=JSON.parse(document.getElementById('import-ta').value);
+    results={}; ffRes={}; activeKey=null;
+    showTab('bracket');
+    renderBracket(); renderProgress(); renderUpsets();
+    const m=countMatched(); ss('s-match',String(m)); sd('d-match',m>5?'live':'loading');
+  } catch(e) { alert('Invalid JSON:\n'+e.message); }
+}
+
+function sd(id,state){ const el=document.getElementById(id); if(el) el.className='dot dot-'+state; }
+function ss(id,val){ const el=document.getElementById(id); if(el) el.textContent=val; }
+function showProg(on){ document.getElementById('prog').classList.toggle('show',on); }
+function setProg(done,tot,lbl){ document.getElementById('pg-f').style.width=tot?`${done/tot*100}%`:'0%'; document.getElementById('pg-lbl').textContent=lbl||`${done}/${tot}`; }
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ══════════════════════════════════════════════
+// DRAGGABLE RESIZER
+// ══════════════════════════════════════════════
+(function() {
+  const resizer = document.getElementById('resizer');
+  const sidebar = document.getElementById('sidebar');
+  const body    = document.getElementById('body');
+  if (!resizer || !sidebar) return;
+  let startX, startW;
+  resizer.addEventListener('mousedown', e => {
+    startX = e.clientX;
+    startW = sidebar.offsetWidth;
+    resizer.classList.add('dragging');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!resizer.classList.contains('dragging')) return;
+    const delta = startX - e.clientX; // dragging left = sidebar grows
+    const newW = Math.min(Math.max(startW + delta, 240), window.innerWidth * 0.75);
+    sidebar.style.width = newW + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!resizer.classList.contains('dragging')) return;
+    resizer.classList.remove('dragging');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+  // Double-click to reset
+  resizer.addEventListener('dblclick', () => {
+    sidebar.style.width = '420px';
+  });
+})();
+
+// ══════════════════════════════════════════════
+// DOWNLOAD PDF — Visual bracket layout
+// ══════════════════════════════════════════════
+function downloadPDF() {
+  const ROUND_LABELS = ['Round of 64', 'R32', 'Sweet 16', 'Elite 8'];
+  const ROUND_CNTS   = [8, 4, 2, 1];
+
+  // Build one region's column data
+  function regionData(region) {
+    const cols = [];
+    for (let rn = 0; rn < 4; rn++) {
+      const games = [];
+      for (let idx = 0; idx < ROUND_CNTS[rn]; idx++) {
+        const game = getGame(region, rn, idx) || ['',''];
+        const res  = results[region]?.[rn]?.[idx];
+        const t1 = game[0]||'', t2 = game[1]||'';
+        const n1 = t1.replace(/^\d+\s*/,''), n2 = t2.replace(/^\d+\s*/,'');
+        const s1 = (t1.match(/^(\d+)/)||['',''])[1];
+        const s2 = (t2.match(/^(\d+)/)||['',''])[1];
+        games.push({ n1, n2, s1, s2, res });
+      }
+      cols.push({ label: ROUND_LABELS[rn], games });
+    }
+    return cols;
+  }
+
+  function gameCard(g, compact) {
+    const res = g.res;
+    function teamRow(name, seed, isWin, isOv, prob) {
+      const bg = isOv ? '#f3eaff' : isWin ? '#fff8e6' : '#fff';
+      const fc = isOv ? '#7b2d9e' : isWin ? '#b85c00' : '#555';
+      const fw = isWin ? '700' : '400';
+      const td = isWin ? '' : 'text-decoration:line-through;opacity:.55;';
+      const probBadge = (isWin && prob) ? ('<span style="float:right;font-family:monospace;font-size:9px;color:' + (isOv?'#9b59b6':'#b85c00') + '">' + prob + '%</span>') : '';
+      const ovDot = isOv ? '<span style="color:#9b59b6;font-size:8px"> ✋</span>' : '';
+      return '<div style="background:' + bg + ';padding:2px 5px;display:flex;align-items:center;gap:3px">' +
+        '<span style="font-size:8px;color:#aaa;min-width:10px;font-family:monospace">' + (seed||'') + '</span>' +
+        '<span style="font-size:' + (compact?'9':'10') + 'px;color:' + fc + ';font-weight:' + fw + ';' + td + 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (name||'TBD') + ovDot + '</span>' +
+        probBadge +
+      '</div>';
+    }
+
+    const hasRes = !!res;
+    const win1 = hasRes && res.winner === res.n1;
+    const win2 = hasRes && res.winner === res.n2;
+    const ov1 = hasRes && res.overridden && res.overrideWinner === res.n1;
+    const ov2 = hasRes && res.overridden && res.overrideWinner === res.n2;
+    const prob1 = hasRes ? (win1 ? res.winProb : 100-res.winProb) : null;
+    const prob2 = hasRes ? (win2 ? res.winProb : 100-res.winProb) : null;
+
+    return '<div style="border:1px solid #ddd;border-radius:3px;overflow:hidden;margin-bottom:2px;background:#fff">' +
+      teamRow(g.n1||'TBD', g.s1, win1, ov1, prob1) +
+      '<div style="height:1px;background:#eee"></div>' +
+      teamRow(g.n2||'TBD', g.s2, win2, ov2, prob2) +
+    '</div>';
+  }
+
+  // Build HTML
+  const date = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const lines = [];
+  lines.push(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bracket Oracle Picks</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f9f8f5; color: #111; padding: 16px; }
+  h1 { font-size: 22px; letter-spacing: 3px; color: #e05500; text-transform: uppercase; }
+  .subtitle { font-size: 9px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .bracket-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .region-block { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; }
+  .region-title { font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.5px; color: #e05500; border-bottom: 2px solid #e05500; padding-bottom: 4px; margin-bottom: 8px; }
+  .rounds-row { display: flex; gap: 6px; overflow-x: auto; }
+  .round-col { flex: 1; min-width: 0; }
+  .rnd-lbl { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 4px; text-align: center; }
+  .ff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .ff-block { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 10px; }
+  .ff-title { font-size: 11px; font-weight: 700; color: #333; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 8px; }
+  .champ-block { background: #fff8e6; border: 2px solid #e05500; border-radius: 6px; padding: 14px; text-align: center; margin-top: 16px; }
+  .champ-lbl { font-size: 9px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; }
+  .champ-name { font-size: 20px; font-weight: 900; color: #e05500; letter-spacing: 1px; margin: 4px 0; }
+  .champ-prob { font-size: 11px; color: #888; font-family: monospace; }
+  .footer { font-size: 8px; color: #bbb; border-top: 1px solid #eee; padding-top: 8px; margin-top: 16px; }
+  @media print { body { padding: 8px; } @page { size: landscape; margin: 0.4in; } }
+</style></head><body>`);
+
+  lines.push(`<h1>Bracket Oracle</h1><div class="subtitle">My Picks · ${date}</div>`);
+  lines.push('<div class="bracket-grid">');
+
+  REGIONS.forEach(region => {
+    const cols = regionData(region);
+    lines.push(`<div class="region-block"><div class="region-title">${region}</div><div class="rounds-row">`);
+    cols.forEach(col => {
+      lines.push(`<div class="round-col"><div class="rnd-lbl">${col.label}</div>`);
+      col.games.forEach(g => lines.push(gameCard(g, col.games.length > 4)));
+      lines.push('</div>');
+    });
+    lines.push('</div></div>');
+  });
+  lines.push('</div>');
+
+  // Final Four
+  lines.push('<div class="ff-grid">');
+  [[0,'Final Four: East vs West'],[1,'Final Four: South vs Midwest']].forEach(([i,lbl]) => {
+    lines.push(`<div class="ff-block"><div class="ff-title">${lbl}</div>`);
+    const game = getFFGame(i); const r = ffRes[i];
+    if (r) {
+      const w = r.winner, l = r.winner===r.n1?r.n2:r.n1;
+      const ov = r.overridden;
+      lines.push(`<div style="font-size:12px;font-weight:700;color:${ov?'#7b2d9e':'#b85c00'}">${w}${ov?' ✋':''} <span style="font-family:monospace;font-size:10px">${r.winProb}%</span></div>`);
+      lines.push(`<div style="font-size:10px;color:#999;text-decoration:line-through">${l}</div>`);
+    } else {
+      lines.push('<div style="color:#ccc;font-size:10px;font-style:italic">Not analyzed</div>');
+    }
+    lines.push('</div>');
+  });
+  lines.push('</div>');
+
+  // Championship
+  const ch = ffRes.champ;
+  if (ch) {
+    const loser = ch.winner===ch.n1?ch.n2:ch.n1;
+    lines.push(`<div class="champ-block"><div class="champ-lbl">🏆 National Champion</div><div class="champ-name">${ch.winner}</div><div class="champ-prob">over ${loser} · ${ch.winProb}% probability</div></div>`);
+  }
+
+  lines.push(`<div class="footer">Generated by Bracket Oracle · Powered by BartTorvik + ESPN · ${date}</div>`);
+  lines.push('</body></html>');
+
+  const blob = new Blob([lines.join('\n')], {type: 'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (win) win.addEventListener('load', () => setTimeout(() => win.print(), 400));
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded', function() {
+  // Load hardcoded BartTorvik data immediately — no fetch needed.
+  // Sliders and predictions are fully functional from page load.
+  const bartCnt = loadHardcodedBart();
+  dataLoaded = true;
+  document.getElementById('s-note').textContent = '✓ Built-in data loaded';
+  const fb = document.getElementById('btn-fetch');
+  if (fb) { fb.style.display = 'none'; }
+  const rb = document.getElementById('btn-refetch');
+  if (rb) { rb.style.display = ''; rb.title = 'Fetch latest live data from BartTorvik'; }
+  renderBracket();
+  renderProgress();
+  renderFormulaSliders();
+});
+</script>
+</body>
+</html>
